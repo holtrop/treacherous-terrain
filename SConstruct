@@ -38,6 +38,7 @@ if platform == 'windows':
 else:
     LIBS_client += ['sfml-network', 'sfml-window', 'sfml-system']
     LIBS_server += ['sfml-network']
+    LINKFLAGS.append('-Wl,-R%s/lib' % SFML_PATH)
 
 # our sources
 sources_client = [Glob('src/common/*.cc'), Glob('src/client/*.cc')]
