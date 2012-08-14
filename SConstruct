@@ -14,8 +14,8 @@ BIN_DIR = 'bin'
 CXX = 'g++'
 CXXFLAGS = ['-Wall', '-O2']
 LINKFLAGS = []
-LIBS_client = ['sfml-network', 'sfml-window', 'sfml-system']
-LIBS_server = ['sfml-network']
+LIBS_client = []
+LIBS_server = []
 libs_to_copy = []
 SFML_PATH_PREFIX = '/c/apps' if platform == 'windows' else '/opt'
 SFML_PATH = '%s/SFML-%s' % (SFML_PATH_PREFIX, SFML_VERSION)
@@ -28,10 +28,16 @@ if platform == 'windows':
     # Windows-specific environment settings
     CXX = 'i686-pc-mingw32-g++'
     MINGW_DIR = '/usr/i686-pc-mingw32/sys-root/mingw/bin'
+    LIBS_client += ['sfml-network-s', 'sfml-window-s', 'sfml-system-s']
+    LIBS_server += ['sfml-network-s']
     LINKFLAGS.append('-static-libstdc++')
     LIBS_client.append('mingw32')
     LIBS_server.append('mingw32')
     libs_to_copy.append('%s/libgcc_s_dw2-1.dll' % MINGW_DIR)
+    CPPFLAGS.append('-DSFML_STATIC')
+else:
+    LIBS_client += ['sfml-network', 'sfml-window', 'sfml-system']
+    LIBS_server += ['sfml-network']
 
 # our sources
 sources_client = [Glob('src/common/*.cc'), Glob('src/client/*.cc')]
