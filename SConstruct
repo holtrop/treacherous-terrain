@@ -9,16 +9,15 @@ server_name = client_name + '-server'
 platform = 'windows' if os.path.exists('/bin/cygwin1.dll') else 'unix'
 
 # common environment settings
-#SFML_VERSION = '2.0-rc'
-SFML_VERSION = '1.6'
+SFML_VERSION = '2.0-rc'
 BIN_DIR = 'bin'
 CXX = 'g++'
-CPPFLAGS = []
+CPPFLAGS = ['-DSFML_STATIC']
 CXXFLAGS = ['-Wall', '-O2']
 LINKFLAGS = []
 LIBPATH = []
-LIBS_client = ['sfml-network', 'sfml-system', 'sfml-window']
-LIBS_server = ['sfml-network']
+LIBS_client = ['sfml-network-s', 'sfml-window-s', 'sfml-system-s']
+LIBS_server = ['sfml-network-s']
 libs_to_copy = []
 
 if platform == 'windows':

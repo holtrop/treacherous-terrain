@@ -18,27 +18,27 @@ int main(int argc, char *argv[])
         }
     }
     sf::VideoMode mode = fullscreen
-        ? sf::VideoMode::GetDesktopMode()
+        ? sf::VideoMode::getDesktopMode()
         : sf::VideoMode(800, 600, 32);
     long style = fullscreen
         ? sf::Style::Fullscreen
         : sf::Style::Resize | sf::Style::Close;
     sf::Window window(mode, "Treacherous Terrain", style);
 
-    while (window.IsOpened())
+    while (window.isOpen())
     {
         sf::Event event;
-        while (window.GetEvent(event))
+        while (window.pollEvent(event))
         {
-            if (event.Type == sf::Event::Closed)
-                window.Close();
+            if (event.type == sf::Event::Closed)
+                window.close();
 
-            if ( (event.Type == sf::Event::KeyPressed)
-                    && (event.Key.Code == sf::Key::Escape) )
-                window.Close();
+            if ( (event.type == sf::Event::KeyPressed)
+                    && (event.key.code == sf::Keyboard::Escape) )
+                window.close();
         }
 
-        window.Display();
+        window.display();
     }
 
     return 0;
