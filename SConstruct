@@ -12,23 +12,22 @@ platform = 'windows' if os.path.exists('/bin/cygwin1.dll') else 'unix'
 SFML_VERSION = '2.0-rc'
 BIN_DIR = 'bin'
 CXX = 'g++'
-CPPFLAGS = ['-DSFML_STATIC']
 CXXFLAGS = ['-Wall', '-O2']
 LINKFLAGS = []
-LIBPATH = []
-LIBS_client = ['sfml-network-s', 'sfml-window-s', 'sfml-system-s']
-LIBS_server = ['sfml-network-s']
+LIBS_client = ['sfml-network', 'sfml-window', 'sfml-system']
+LIBS_server = ['sfml-network']
 libs_to_copy = []
+SFML_PATH_PREFIX = '/c/apps' if platform == 'windows' else '/opt'
+SFML_PATH = '%s/SFML-%s' % (SFML_PATH_PREFIX, SFML_VERSION)
+if 'SFML_PATH' in os.environ:
+    SFML_PATH = os.environ['SFML_PATH']
+CPPFLAGS = ['-I%s/include' % SFML_PATH]
+LIBPATH = ['%s/lib' % SFML_PATH]
 
 if platform == 'windows':
     # Windows-specific environment settings
     CXX = 'i686-pc-mingw32-g++'
     MINGW_DIR = '/usr/i686-pc-mingw32/sys-root/mingw/bin'
-    SFML_PATH = '/c/apps/SFML-%s' % SFML_VERSION
-    if 'SFML_PATH' in os.environ:
-        SFML_PATH = os.environ['SFML_PATH']
-    CPPFLAGS.append('-I%s/include' % SFML_PATH)
-    LIBPATH.append('%s/lib' % SFML_PATH)
     LINKFLAGS.append('-static-libstdc++')
     LIBS_client.append('mingw32')
     LIBS_server.append('mingw32')
