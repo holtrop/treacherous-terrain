@@ -1,45 +1,32 @@
 
-#include <getopt.h>
-#include <SFML/Window.hpp>
+#include "Client.h"
 
-int main(int argc, char *argv[])
+Client::Client(bool fullscreen)
 {
-    bool fullscreen = false;
-    for (;;)
-    {
-        int c = getopt_long(argc, argv, "f", NULL, NULL);
-        if (c == -1)
-            break;
-        switch (c)
-        {
-            case 'f':
-                fullscreen = true;
-                break;
-        }
-    }
     sf::VideoMode mode = fullscreen
         ? sf::VideoMode::getDesktopMode()
         : sf::VideoMode(800, 600, 32);
     long style = fullscreen
         ? sf::Style::Fullscreen
         : sf::Style::Resize | sf::Style::Close;
-    sf::Window window(mode, "Treacherous Terrain", style);
+    m_window = new sf::Window(mode, "Treacherous Terrain", style);
+}
 
-    while (window.isOpen())
+void Client::run()
+{
+    while (m_window->isOpen())
     {
         sf::Event event;
-        while (window.pollEvent(event))
+        while (m_window->pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
-                window.close();
+                m_window->close();
 
             if ( (event.type == sf::Event::KeyPressed)
                     && (event.key.code == sf::Keyboard::Escape) )
-                window.close();
+                m_window->close();
         }
 
-        window.display();
+        m_window->display();
     }
-
-    return 0;
 }

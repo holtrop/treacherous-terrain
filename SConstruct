@@ -23,6 +23,8 @@ if 'SFML_PATH' in os.environ:
     SFML_PATH = os.environ['SFML_PATH']
 CPPFLAGS = ['-I%s/include' % SFML_PATH]
 LIBPATH = ['%s/lib' % SFML_PATH]
+for dirent in os.listdir('src'):
+    CPPFLAGS.append('-I%s/src/%s' % (os.getcwd(), dirent))
 
 if platform == 'windows':
     # Windows-specific environment settings
