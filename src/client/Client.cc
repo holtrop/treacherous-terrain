@@ -75,5 +75,8 @@ void Client::resize_window(int width, int height)
 {
     glViewport(0, 0, width, height);
     float aspect = (float)width / (float)height;
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
     glOrtho(-1.2 * aspect, 1.2 * aspect, -1.2, 1.2, 1, -1);
+    glMatrixMode(GL_MODELVIEW);
 }
