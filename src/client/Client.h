@@ -11,7 +11,10 @@ class Client
         Client(bool fullscreen);
         void run();
     protected:
+        void initgl();
+        void resize_window(int width, int height);
         refptr<sf::Window> m_window;
+        sf::Clock m_clock;
 };
 
 #endif
