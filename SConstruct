@@ -30,15 +30,15 @@ if platform == 'windows':
     # Windows-specific environment settings
     CXX = 'i686-pc-mingw32-g++'
     MINGW_DIR = '/usr/i686-pc-mingw32/sys-root/mingw/bin'
-    LIBS_client += ['sfml-network-s', 'sfml-window-s', 'sfml-system-s']
-    LIBS_server += ['sfml-network-s']
+    LIBS_client += ['sfml-graphics-s', 'sfml-window-s', 'sfml-system-s',
+            'sfml-network-s', 'opengl32', 'mingw32']
+    LIBS_server += ['sfml-network-s', 'mingw32']
     LINKFLAGS.append('-static-libstdc++')
-    LIBS_client.append('mingw32')
-    LIBS_server.append('mingw32')
     libs_to_copy.append('%s/libgcc_s_dw2-1.dll' % MINGW_DIR)
     CPPFLAGS.append('-DSFML_STATIC')
 else:
-    LIBS_client += ['sfml-network', 'sfml-window', 'sfml-system']
+    LIBS_client += ['sfml-network', 'sfml-window', 'sfml-graphics',
+            'sfml-system', 'GL']
     LIBS_server += ['sfml-network']
     LINKFLAGS.append('-Wl,-R%s/lib' % SFML_PATH)
 

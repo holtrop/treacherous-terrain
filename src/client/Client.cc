@@ -1,6 +1,7 @@
 
 #include "Client.h"
 #include <SFML/OpenGL.hpp>
+#include <SFML/Graphics.hpp>
 
 Client::Client(bool fullscreen)
 {
