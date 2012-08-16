@@ -66,5 +66,4 @@ for lib_path in libs_to_copy:
     installed_libs = env_client.Install(BIN_DIR, lib_path)
     env_client.Depends('%s/%s' % (BIN_DIR, client_name), installed_libs)
 env_client.Program('%s/%s' % (BIN_DIR, client_name), sources_client)
-# turn this back on when we have any server sources present
-#env_server.Program('%s/%s' % (BIN_DIR, server_name), sources_server)
+env_server.Program('%s/%s' % (BIN_DIR, server_name), sources_server)
