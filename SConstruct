@@ -55,6 +55,7 @@ env_client = Environment(
         LIBPATH = LIBPATH,
         LIBS = LIBS_client)
 env_server = Environment(
+        OBJSUFFIX = '-server.o',
         CXX = CXX,
         CPPFLAGS = CPPFLAGS,
         CXXFLAGS = CXXFLAGS,
