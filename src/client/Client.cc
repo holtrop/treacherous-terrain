@@ -47,20 +47,7 @@ void Client::run()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        /* simple fixed-functionality drawing demo for now */
-        glPushMatrix();
-        glRotatef(m_clock.getElapsedTime().asSeconds() * 180.0f, 0, 0, 1);
-        glBegin(GL_QUADS);
-        glColor3f(1, 0.6, 0.1);
-        glVertex2f(1, 1);
-        glColor3f(0, 0, 1);
-        glVertex2f(-1, 1);
-        glColor3f(1, 0, 0);
-        glVertex2f(-1, -1);
-        glColor3f(0, 1, 0);
-        glVertex2f(1, -1);
-        glEnd();
-        glPopMatrix();
+        draw_map();
 
         m_window->display();
     }
@@ -78,6 +65,46 @@ void Client::resize_window(int width, int height)
     float aspect = (float)width / (float)height;
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(-1.2 * aspect, 1.2 * aspect, -1.2, 1.2, 1, -1);
+    gluPerspective(60.0f, aspect, 0.01, 1000.0);
     glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glRotatef(-70, 1, 0, 0);
+}
+
+void Client::draw_map()
+{
+    const int width = m_map.get_width();
+    const int height = m_map.get_height();
+    const float span_x = 50;
+    const float span_y = 50;
+    float center_x = (span_x * width) / 2.0;
+    glPushAttrib(GL_POLYGON_BIT);
+    glEnable(GL_POLYGON_OFFSET_LINE);
+    glPushMatrix();
+    glTranslatef(-center_x, 0, -100);
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            glPushMatrix();
+            glTranslatef(span_x * x, span_y * y, 0);
+            glBegin(GL_QUADS);
+            glColor3f(0.4, 0.4, 0.4);
+            glVertex2f(span_x, span_y);
+            glVertex2f(0, span_y);
+            glVertex2f(0, 0);
+            glVertex2f(span_x, 0);
+            glEnd();
+            glBegin(GL_LINE_LOOP);
+            glColor3f(1, 1, 1);
+            glVertex2f(span_x, span_y);
+            glVertex2f(0, span_y);
+            glVertex2f(0, 0);
+            glVertex2f(span_x, 0);
+            glEnd();
+            glPopMatrix();
+        }
+    }
+    glPopMatrix();
+    glPopAttrib();
 }
