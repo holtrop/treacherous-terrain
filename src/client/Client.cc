@@ -1,7 +1,8 @@
 
-#include "Client.h"
+#include <math.h>
 #include <SFML/OpenGL.hpp>
 #include <SFML/Graphics.hpp>
+#include "Client.h"
 
 Client::Client(bool fullscreen)
 {
@@ -12,7 +13,12 @@ Client::Client(bool fullscreen)
         ? sf::Style::Fullscreen
         : sf::Style::Resize | sf::Style::Close;
     m_window = new sf::Window(mode, "Treacherous Terrain", style);
+    initgl();
     resize_window(m_window->getSize().x, m_window->getSize().y);
+    m_player = new Player();
+    m_player->x = 1250;
+    m_player->y = 1000;
+    m_player->direction = M_PI_2;
 }
 
 void Client::run()
@@ -47,7 +53,17 @@ void Client::run()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        glPushMatrix();
+        double dir_x = cos(m_player->direction);
+        double dir_y = sin(m_player->direction);
+        glTranslatef(dir_x * 100, dir_y * 100, 0);
+        glRotatef(-m_player->direction * 180.0 / M_PI, 0, 0, 1);
+        glTranslatef(-m_player->x, -m_player->y, -100);
+
+        draw_players();
         draw_map();
+
+        glPopMatrix();
 
         m_window->display();
     }
@@ -57,6 +73,8 @@ void Client::initgl()
 {
     glShadeModel(GL_SMOOTH);
     glDisable(GL_LIGHTING);
+    glEnable(GL_DEPTH_TEST);
+    glPolygonOffset(0, -1);
 }
 
 void Client::resize_window(int width, int height)
@@ -65,10 +83,62 @@ void Client::resize_window(int width, int height)
     float aspect = (float)width / (float)height;
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(60.0f, aspect, 0.01, 1000.0);
+    gluPerspective(60.0f, aspect, 0.01, 5000.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glRotatef(-70, 1, 0, 0);
+}
+
+void Client::draw_players()
+{
+    static const float vertices[][3] = {
+        {1, 1, 1},
+        {-1, 1, 1},
+        {-1, -1, 1},
+        {1, -1, 1},
+        {1, 1, -1},
+        {-1, 1, -1},
+        {-1, -1, -1},
+        {1, -1, -1}
+    };
+    static const int quads[][4] = {
+        {0, 1, 2, 3},
+        {0, 3, 7, 4},
+        {2, 1, 5, 6},
+        {3, 2, 6, 7},
+        {1, 0, 4, 5},
+        {5, 4, 7, 6}
+    };
+    glPushMatrix();
+    glTranslatef(m_player->x, m_player->y, 40);
+    glRotatef(m_player->direction * 180.0 / M_PI, 0, 0, 1);
+    glPushAttrib(GL_POLYGON_BIT);
+    glEnable(GL_POLYGON_OFFSET_LINE);
+    for (int t = 0; t <= 1; t++)
+    {
+        if (t == 0)
+        {
+            glColor3f(0.8, 0, 0);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+        else
+        {
+            glColor3f(0, 0, 0);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+        for (unsigned int i = 0; i < sizeof(quads) / sizeof(quads[0]); i++)
+        {
+            glBegin(GL_QUADS);
+            for (int j = 0; j < 4; j++)
+            {
+                const float * vertex = &vertices[quads[i][j]][0];
+                glVertex3f(vertex[0] * 10, vertex[1] * 20, vertex[2] * 6);
+            }
+            glEnd();
+        }
+    }
+    glPopAttrib();
+    glPopMatrix();
 }
 
 void Client::draw_map()
@@ -77,17 +147,16 @@ void Client::draw_map()
     const int height = m_map.get_height();
     const float span_x = 50;
     const float span_y = 50;
-    float center_x = (span_x * width) / 2.0;
     glPushAttrib(GL_POLYGON_BIT);
     glEnable(GL_POLYGON_OFFSET_LINE);
     glPushMatrix();
-    glTranslatef(-center_x, 0, -100);
     for (int y = 0; y < height; y++)
     {
         for (int x = 0; x < width; x++)
         {
             glPushMatrix();
             glTranslatef(span_x * x, span_y * y, 0);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glBegin(GL_QUADS);
             glColor3f(0.4, 0.4, 0.4);
             glVertex2f(span_x, span_y);
@@ -95,7 +164,8 @@ void Client::draw_map()
             glVertex2f(0, 0);
             glVertex2f(span_x, 0);
             glEnd();
-            glBegin(GL_LINE_LOOP);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glBegin(GL_QUADS);
             glColor3f(1, 1, 1);
             glVertex2f(span_x, span_y);
             glVertex2f(0, span_y);
