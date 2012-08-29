@@ -56,9 +56,9 @@ void Client::run()
         glPushMatrix();
         double dir_x = cos(m_player->direction);
         double dir_y = sin(m_player->direction);
-        glTranslatef(dir_x * 100, dir_y * 100, 0);
-        glRotatef(-m_player->direction * 180.0 / M_PI, 0, 0, 1);
-        glTranslatef(-m_player->x, -m_player->y, -100);
+        gluLookAt(m_player->x - dir_x * 100, m_player->y - dir_y * 100, 150,
+                m_player->x, m_player->y, 100,
+                0, 0, 1);
 
         draw_players();
         draw_map();
@@ -74,7 +74,7 @@ void Client::initgl()
     glShadeModel(GL_SMOOTH);
     glDisable(GL_LIGHTING);
     glEnable(GL_DEPTH_TEST);
-    glPolygonOffset(0, -1);
+    glPolygonOffset(0, -2);
 }
 
 void Client::resize_window(int width, int height)
@@ -86,7 +86,6 @@ void Client::resize_window(int width, int height)
     gluPerspective(60.0f, aspect, 0.01, 5000.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glRotatef(-70, 1, 0, 0);
 }
 
 void Client::draw_players()
@@ -132,7 +131,7 @@ void Client::draw_players()
             for (int j = 0; j < 4; j++)
             {
                 const float * vertex = &vertices[quads[i][j]][0];
-                glVertex3f(vertex[0] * 10, vertex[1] * 20, vertex[2] * 6);
+                glVertex3f(vertex[0] * 20, vertex[1] * 10, vertex[2] * 6);
             }
             glEnd();
         }
