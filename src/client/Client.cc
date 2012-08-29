@@ -2,6 +2,7 @@
 #include <math.h>
 #include <SFML/OpenGL.hpp>
 #include <SFML/Graphics.hpp>
+#include <SFML/System.hpp>
 #include "Client.h"
 #include <stdio.h>
 
@@ -25,8 +26,13 @@ Client::Client(bool fullscreen)
 void Client::run()
 {
     m_clock.restart();
+    m_window->setMouseCursorVisible(false);
+    sf::Mouse::setPosition(sf::Vector2i(m_width / 2, m_height / 2), *m_window);
+    double last_time = 0.0;
     while (m_window->isOpen())
     {
+        double current_time = m_clock.getElapsedTime().asSeconds();
+        double elapsed_time = current_time - last_time;
         sf::Event event;
         while (m_window->pollEvent(event))
         {
@@ -53,7 +59,7 @@ void Client::run()
             }
         }
 
-        update();
+        update(elapsed_time);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glPushMatrix();
@@ -69,6 +75,7 @@ void Client::run()
         glPopMatrix();
 
         m_window->display();
+        last_time = current_time;
     }
 }
 
@@ -82,6 +89,9 @@ void Client::initgl()
 
 void Client::resize_window(int width, int height)
 {
+    m_width = width;
+    m_height = height;
+    sf::Mouse::setPosition(sf::Vector2i(m_width / 2, m_height / 2), *m_window);
     glViewport(0, 0, width, height);
     float aspect = (float)width / (float)height;
     glMatrixMode(GL_PROJECTION);
@@ -91,12 +101,9 @@ void Client::resize_window(int width, int height)
     glLoadIdentity();
 }
 
-void Client::update()
+void Client::update(double elapsed_time)
 {
-    static double last_time = 0.0;
     const double move_speed = 300.0;
-    const double current_time = m_clock.getElapsedTime().asSeconds();
-    const double elapsed_time = current_time - last_time;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
     {
         double direction = m_player->direction + M_PI_2;
@@ -121,7 +128,9 @@ void Client::update()
         m_player->x += cos(direction) * move_speed * elapsed_time;
         m_player->y += sin(direction) * move_speed * elapsed_time;
     }
-    last_time = current_time;
+    int xrel = sf::Mouse::getPosition(*m_window).x - m_width / 2;
+    sf::Mouse::setPosition(sf::Vector2i(m_width / 2, m_height / 2), *m_window);
+    m_player->direction -= M_PI * 0.5 * xrel / 1000;
 }
 
 void Client::draw_players()

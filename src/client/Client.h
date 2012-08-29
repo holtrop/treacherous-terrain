@@ -15,13 +15,15 @@ class Client
     protected:
         void initgl();
         void resize_window(int width, int height);
-        void update();
+        void update(double elapsed_time);
         void draw_players();
         void draw_map();
         refptr<sf::Window> m_window;
         sf::Clock m_clock;
         Map m_map;
         refptr<Player> m_player;
+        int m_width;
+        int m_height;
 };
 
 #endif
