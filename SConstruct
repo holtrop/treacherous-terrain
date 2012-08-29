@@ -1,9 +1,13 @@
 # vim:filetype=python
 
 import os
+import re
+from subprocess import Popen, PIPE
 
 client_name = 'treacherous-terrain'
 server_name = client_name + '-server'
+
+CCFS_ROOT = 'assets/fs'
 
 # determine our build platform
 platform = 'windows' if os.path.exists('/bin/cygwin1.dll') else 'unix'
@@ -44,7 +48,7 @@ else:
 
 # our sources
 sources_client = [Glob('src/common/*.cc'), Glob('src/client/*.cc')]
-sources_server = [Glob('src/common/*.cc'), Glob('src/server/*.cc')]
+sources_server = [Glob('src/common/*.cc'), Glob('src/server/*.cc'), 'src/client/ccfs.cc']
 
 # create the scons environments
 env_client = Environment(
@@ -62,6 +66,38 @@ env_server = Environment(
         LINKFLAGS = LINKFLAGS,
         LIBPATH = LIBPATH,
         LIBS = LIBS_server)
+
+# CCFS builder
+
+def get_all_files(prefix):
+    files = []
+    for ent in os.listdir(prefix):
+        if ent.startswith('.'):
+            next
+        full_path = '%s/%s' % (prefix, ent)
+        if os.path.isdir(full_path):
+            files += get_all_files(full_path)
+        else:
+            files.append(full_path)
+    return files
+
+def CCFS(target, source, env):
+    source_list = []
+    for s in source:
+        source_fname = str(s)
+        source_fname = source_fname.replace(CCFS_ROOT + '/', '')
+        source_list.append(source_fname)
+    Popen(['./ccfs_gen.py', '--root', 'assets/fs', str(target[0])] + source_list).wait()
+    return None
+
+def CCFS_emitter(target, source, env):
+    target.append(re.sub(r'\..*$', '.h', str(target[0])))
+    return target, source
+
+env_client.Append(BUILDERS = {'CCFS' : Builder(action = CCFS, emitter = CCFS_emitter)})
+
+env_client.CCFS('src/client/ccfs.cc', get_all_files(CCFS_ROOT))
+env_client.Depends('src/client/ccfs.cc', 'ccfs_gen.py')
 
 for lib_path in libs_to_copy:
     installed_libs = env_client.Install(BIN_DIR, lib_path)
