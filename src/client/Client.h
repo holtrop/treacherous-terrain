@@ -15,6 +15,7 @@ class Client
     protected:
         void initgl();
         void resize_window(int width, int height);
+        void update();
         void draw_players();
         void draw_map();
         refptr<sf::Window> m_window;

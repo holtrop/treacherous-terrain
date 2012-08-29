@@ -3,6 +3,7 @@
 #include <SFML/OpenGL.hpp>
 #include <SFML/Graphics.hpp>
 #include "Client.h"
+#include <stdio.h>
 
 Client::Client(bool fullscreen)
 {
@@ -23,6 +24,7 @@ Client::Client(bool fullscreen)
 
 void Client::run()
 {
+    m_clock.restart();
     while (m_window->isOpen())
     {
         sf::Event event;
@@ -51,6 +53,7 @@ void Client::run()
             }
         }
 
+        update();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glPushMatrix();
@@ -86,6 +89,39 @@ void Client::resize_window(int width, int height)
     gluPerspective(60.0f, aspect, 0.01, 5000.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+}
+
+void Client::update()
+{
+    static double last_time = 0.0;
+    const double move_speed = 300.0;
+    const double current_time = m_clock.getElapsedTime().asSeconds();
+    const double elapsed_time = current_time - last_time;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+    {
+        double direction = m_player->direction + M_PI_2;
+        m_player->x += cos(direction) * move_speed * elapsed_time;
+        m_player->y += sin(direction) * move_speed * elapsed_time;
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+    {
+        double direction = m_player->direction - M_PI_2;
+        m_player->x += cos(direction) * move_speed * elapsed_time;
+        m_player->y += sin(direction) * move_speed * elapsed_time;
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+    {
+        double direction = m_player->direction;
+        m_player->x += cos(direction) * move_speed * elapsed_time;
+        m_player->y += sin(direction) * move_speed * elapsed_time;
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+    {
+        double direction = m_player->direction + M_PI;
+        m_player->x += cos(direction) * move_speed * elapsed_time;
+        m_player->y += sin(direction) * move_speed * elapsed_time;
+    }
+    last_time = current_time;
 }
 
 void Client::draw_players()
