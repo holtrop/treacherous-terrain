@@ -9,6 +9,16 @@ server_name = client_name + '-server'
 
 CCFS_ROOT = 'assets/fs'
 
+def find_sources_under(path):
+    sources = []
+    for ent in os.listdir(path):
+        ent_path = '%s/%s' % (path, ent)
+        if re.search('\.cc?$', ent):
+            sources.append(ent_path)
+        elif os.path.isdir(ent_path):
+            sources += find_sources_under(ent_path)
+    return sources
+
 # determine our build platform
 platform = 'windows' if os.path.exists('/bin/cygwin1.dll') else 'unix'
 
@@ -16,6 +26,7 @@ platform = 'windows' if os.path.exists('/bin/cygwin1.dll') else 'unix'
 SFML_VERSION = '2.0-rc'
 BIN_DIR = 'bin'
 CXX = 'g++'
+CC = 'gcc'
 CXXFLAGS = ['-Wall', '-O2']
 LINKFLAGS = []
 LIBS_client = []
@@ -33,6 +44,7 @@ for dirent in os.listdir('src'):
 if platform == 'windows':
     # Windows-specific environment settings
     CXX = 'i686-pc-mingw32-g++'
+    CC = 'i686-pc-mingw32-gcc'
     MINGW_DIR = '/usr/i686-pc-mingw32/sys-root/mingw/bin'
     LIBS_client += ['sfml-graphics-s', 'sfml-window-s', 'sfml-system-s',
             'sfml-network-s', 'opengl32', 'glu32', 'mingw32']
@@ -47,11 +59,15 @@ else:
     LINKFLAGS.append('-Wl,-R%s/lib' % SFML_PATH)
 
 # our sources
-sources_client = [Glob('src/common/*.cc'), Glob('src/client/*.cc')]
-sources_server = [Glob('src/common/*.cc'), Glob('src/server/*.cc'), 'src/client/ccfs.cc']
+sources_client = (find_sources_under('src/common') +
+        find_sources_under('src/client'))
+sources_server = (find_sources_under('src/common') +
+        find_sources_under('src/server') +
+        ['src/client/ccfs.cc'])
 
 # create the scons environments
 env_client = Environment(
+        CC = CC,
         CXX = CXX,
         CPPFLAGS = CPPFLAGS,
         CXXFLAGS = CXXFLAGS,
@@ -60,6 +76,7 @@ env_client = Environment(
         LIBS = LIBS_client)
 env_server = Environment(
         OBJSUFFIX = '-server.o',
+        CC = CC,
         CXX = CXX,
         CPPFLAGS = CPPFLAGS,
         CXXFLAGS = CXXFLAGS,
