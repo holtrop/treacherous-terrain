@@ -29,7 +29,7 @@ CXX = 'g++'
 CC = 'gcc'
 CXXFLAGS = ['-Wall', '-O2']
 LINKFLAGS = []
-LIBS_client = []
+LIBS_client = ['GLEW']
 LIBS_server = []
 libs_to_copy = []
 SFML_PATH_PREFIX = '/c/apps' if platform == 'windows' else '/opt'
