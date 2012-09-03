@@ -36,7 +36,7 @@ SFML_PATH_PREFIX = '/c/apps' if platform == 'windows' else '/opt'
 SFML_PATH = '%s/SFML-%s' % (SFML_PATH_PREFIX, SFML_VERSION)
 if 'SFML_PATH' in os.environ:
     SFML_PATH = os.environ['SFML_PATH']
-CPPFLAGS = ['-I%s/include' % SFML_PATH]
+CPPFLAGS = ['-I%s/include' % SFML_PATH, '-DGL_INCLUDE_FILE=\\"GL/glew.h\\"']
 LIBPATH = ['%s/lib' % SFML_PATH]
 for dirent in os.listdir('src'):
     CPPFLAGS.append('-I%s/src/%s' % (os.getcwd(), dirent))
