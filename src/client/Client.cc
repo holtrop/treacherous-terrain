@@ -1,10 +1,14 @@
 
 #include <math.h>
+#include <GL/glew.h>
 #include <SFML/OpenGL.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
 #include "Client.h"
 #include <stdio.h>
+#include <iostream>
+
+using namespace std;
 
 Client::Client(bool fullscreen)
 {
@@ -15,6 +19,11 @@ Client::Client(bool fullscreen)
         ? sf::Style::Fullscreen
         : sf::Style::Resize | sf::Style::Close;
     m_window = new sf::Window(mode, "Treacherous Terrain", style);
+    GLenum err = glewInit();
+    if (err != GLEW_OK)
+    {
+        cerr << "GLEW Initialization error: " << glewGetErrorString(err) << endl;
+    }
     initgl();
     resize_window(m_window->getSize().x, m_window->getSize().y);
     m_player = new Player();
