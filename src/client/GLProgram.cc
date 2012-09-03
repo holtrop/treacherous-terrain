@@ -58,3 +58,16 @@ bool GLProgram::create(const char *v_source, const char *f_source,
 
     return true;
 }
+
+GLint GLProgram::get_uniform_location(const char *name)
+{
+    return glGetUniformLocation(m_id, name);
+}
+
+void GLProgram::get_uniform_locations(const char **names, int num, GLint *locs)
+{
+    for (int i = 0; i < num; i++)
+    {
+        locs[i] = get_uniform_location(names[i]);
+    }
+}

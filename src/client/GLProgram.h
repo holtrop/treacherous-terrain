@@ -17,6 +17,8 @@ class GLProgram
         bool create(const char *v_source, const char *f_source,
                 AttributeBinding *bindings = NULL);
         GLuint get_id() { return m_id; }
+        GLint get_uniform_location(const char *name);
+        void get_uniform_locations(const char **names, int num, GLint *locs);
     protected:
         GLuint m_id;
         GLShader m_v_shader;
