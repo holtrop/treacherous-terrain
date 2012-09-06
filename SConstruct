@@ -9,6 +9,14 @@ server_name = client_name + '-server'
 
 CCFS_ROOT = 'assets/fs'
 
+def find_dirs_under(path):
+    dirs = [path]
+    for ent in os.listdir(path):
+        ent_path = '%s/%s' % (path, ent)
+        if os.path.isdir(ent_path):
+            dirs += find_dirs_under(ent_path)
+    return dirs
+
 def find_sources_under(path):
     sources = []
     for ent in os.listdir(path):
@@ -36,10 +44,13 @@ SFML_PATH_PREFIX = '/c/apps' if platform == 'windows' else '/opt'
 SFML_PATH = '%s/SFML-%s' % (SFML_PATH_PREFIX, SFML_VERSION)
 if 'SFML_PATH' in os.environ:
     SFML_PATH = os.environ['SFML_PATH']
-CPPFLAGS = ['-I%s/include' % SFML_PATH, '-DGL_INCLUDE_FILE=\\"GL/glew.h\\"']
 LIBPATH = ['%s/lib' % SFML_PATH]
-for dirent in os.listdir('src'):
-    CPPFLAGS.append('-I%s/src/%s' % (os.getcwd(), dirent))
+CPPFLAGS = []
+CPPFLAGS += map(lambda x: '-I' + x, find_dirs_under('src/common'))
+CPPFLAGS_client = ['-I%s/include' % SFML_PATH,
+    '-DGL_INCLUDE_FILE=\\"GL/glew.h\\"']
+CPPFLAGS_client += map(lambda x: '-I' + x, find_dirs_under('src/client'))
+CPPFLAGS_server = map(lambda x: '-I' + x, find_dirs_under('src/server'))
 
 if platform == 'windows':
     # Windows-specific environment settings
@@ -68,15 +79,16 @@ else:
 # our sources
 sources_client = (find_sources_under('src/common') +
         find_sources_under('src/client'))
+if 'src/client/ccfs.cc' not in sources_client:
+    sources_client.append('src/client/ccfs.cc')
 sources_server = (find_sources_under('src/common') +
-        find_sources_under('src/server') +
-        ['src/client/ccfs.cc'])
+        find_sources_under('src/server'))
 
 # create the scons environments
 env_client = Environment(
         CC = CC,
         CXX = CXX,
-        CPPFLAGS = CPPFLAGS,
+        CPPFLAGS = CPPFLAGS + CPPFLAGS_client,
         CXXFLAGS = CXXFLAGS,
         LINKFLAGS = LINKFLAGS,
         LIBPATH = LIBPATH,
@@ -85,7 +97,7 @@ env_server = Environment(
         OBJSUFFIX = '-server.o',
         CC = CC,
         CXX = CXX,
-        CPPFLAGS = CPPFLAGS,
+        CPPFLAGS = CPPFLAGS + CPPFLAGS_server,
         CXXFLAGS = CXXFLAGS,
         LINKFLAGS = LINKFLAGS,
         LIBPATH = LIBPATH,
