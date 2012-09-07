@@ -1,6 +1,7 @@
 # vim:filetype=python
 
 import os
+import sys
 import re
 from subprocess import Popen, PIPE
 
@@ -28,7 +29,7 @@ def find_sources_under(path):
     return sources
 
 # determine our build platform
-platform = 'windows' if os.path.exists('/bin/cygwin1.dll') else 'unix'
+platform = 'windows' if sys.platform == 'cygwin' else 'unix'
 
 # common environment settings
 SFML_VERSION = '2.0-rc'
