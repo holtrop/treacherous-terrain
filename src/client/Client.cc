@@ -10,7 +10,8 @@
 
 using namespace std;
 
-Client::Client(bool fullscreen)
+Client::Client(bool fullscreen, bool compatibility_context,
+                unsigned int antialias_level)
 {
     sf::VideoMode mode = fullscreen
         ? sf::VideoMode::getDesktopMode()
@@ -18,7 +19,11 @@ Client::Client(bool fullscreen)
     long style = fullscreen
         ? sf::Style::Fullscreen
         : sf::Style::Resize | sf::Style::Close;
-    m_window = new sf::Window(mode, "Treacherous Terrain", style);
+    const unsigned int opengl_major = compatibility_context ? 2 : 4;
+    const unsigned int opengl_minor = 0u;
+    sf::ContextSettings cs = sf::ContextSettings(0, 0, antialias_level,
+            opengl_major, opengl_minor);
+    m_window = new sf::Window(mode, "Treacherous Terrain", style, cs);
     GLenum err = glewInit();
     if (err != GLEW_OK)
     {

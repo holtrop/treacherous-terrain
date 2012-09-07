@@ -10,7 +10,8 @@
 class Client
 {
     public:
-        Client(bool fullscreen);
+        Client(bool fullscreen, bool compatibility_context,
+                unsigned int antialias_level);
         void run();
     protected:
         void initgl();

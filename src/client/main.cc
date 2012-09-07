@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    Client client(fullscreen);
+    Client client(fullscreen, compatibility_context, antialias_level);
 
     client.run();
 
