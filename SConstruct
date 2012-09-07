@@ -71,6 +71,7 @@ if platform == 'windows':
         GLEW_PATH = os.environ['GLEW_PATH']
     CPPFLAGS.append('-I%s/include' % GLEW_PATH)
     LIBPATH.append('%s/lib' % GLEW_PATH)
+    libs_to_copy.append('%s/bin/glew32.dll' % GLEW_PATH)
 else:
     LIBS_client += ['sfml-network', 'sfml-window', 'sfml-graphics',
             'sfml-system', 'GLEW', 'GL', 'GLU']
