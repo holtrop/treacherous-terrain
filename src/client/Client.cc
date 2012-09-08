@@ -11,6 +11,19 @@
 
 using namespace std;
 
+static bool load_file(const char *fname, WFObj::Buffer & buff)
+{
+    unsigned int length;
+    uint8_t *contents = (uint8_t *) CFS.get_file(fname, &length);
+    if (contents != NULL)
+    {
+        buff.data = contents;
+        buff.length = length;
+        return true;
+    }
+    return false;
+}
+
 Client::Client(bool fullscreen, bool compatibility_context,
                 unsigned int antialias_level)
 {
@@ -51,6 +64,10 @@ Client::Client(bool fullscreen, bool compatibility_context,
                 obj_attrib_bindings))
     {
         cerr << "Error creating obj program" << endl;
+    }
+    if (!tank_obj.load("models/tank.obj", load_file))
+    {
+        cerr << "Error loading tank model" << endl;
     }
 }
 

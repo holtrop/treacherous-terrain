@@ -7,6 +7,7 @@
 #include "Map.h"
 #include "Player.h"
 #include "GLProgram.h"
+#include "WFObj.h"
 
 class Client
 {
@@ -27,6 +28,7 @@ class Client
         int m_width;
         int m_height;
         GLProgram m_obj_program;
+        WFObj tank_obj;
 };
 
 #endif
