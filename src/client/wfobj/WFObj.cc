@@ -240,6 +240,10 @@ void WFObj::processInputLine(const std::string & input)
     {
         /* ignore group name */
     }
+    else if (type == "o")
+    {
+        /* ignore object name */
+    }
     else
     {
         cerr << "WFObj: warning: unhandled command '" << type << "'" << endl;
