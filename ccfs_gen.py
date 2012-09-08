@@ -91,7 +91,9 @@ const unsigned char *CCFSClass::get_file(const char *fname, unsigned int *length
     }
     return NULL;
 }
-''')
+
+CCFSClass %s;
+''' % (instance_name))
     h_file.write('''#ifndef CCFS_GEN_%s
 #define CCFS_GEN_%s
 
@@ -101,7 +103,7 @@ public:
     const unsigned char *get_file(const char *fname, unsigned int *length);
 };
 
-CCFSClass %s;
+extern CCFSClass %s;
 
 #endif
 ''' % (cname(header_fname), cname(header_fname), instance_name))
