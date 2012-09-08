@@ -183,9 +183,9 @@ void Client::update(double elapsed_time)
 
 void Client::draw_players()
 {
-    GLint uniform_locations[4];
-    const char *uniforms[] = { "ambient", "diffuse", "specular", "shininess" };
-    m_obj_program.get_uniform_locations(uniforms, 4, uniform_locations);
+    GLint uniform_locations[5];
+    const char *uniforms[] = { "ambient", "diffuse", "specular", "shininess", "scale" };
+    m_obj_program.get_uniform_locations(uniforms, 5, uniform_locations);
     glPushMatrix();
     glTranslatef(m_player->x, m_player->y, 40);
     glRotatef(m_player->direction * 180.0 / M_PI, 0, 0, 1);
@@ -198,6 +198,7 @@ void Client::draw_players()
             stride, (GLvoid *) m_tank_obj.getVertexOffset());
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
             stride, (GLvoid *) m_tank_obj.getNormalOffset());
+    glUniform1f(uniform_locations[4], 20.0f);
     for (map<string, WFObj::Material>::iterator it =
             m_tank_obj.getMaterials().begin();
             it != m_tank_obj.getMaterials().end();
