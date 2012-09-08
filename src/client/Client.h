@@ -28,7 +28,7 @@ class Client
         int m_width;
         int m_height;
         GLProgram m_obj_program;
-        WFObj tank_obj;
+        WFObj m_tank_obj;
 };
 
 #endif

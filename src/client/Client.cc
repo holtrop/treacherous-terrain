@@ -65,7 +65,7 @@ Client::Client(bool fullscreen, bool compatibility_context,
     {
         cerr << "Error creating obj program" << endl;
     }
-    if (!tank_obj.load("models/tank.obj", load_file))
+    if (!m_tank_obj.load("models/tank.obj", load_file))
     {
         cerr << "Error loading tank model" << endl;
     }
@@ -183,53 +183,50 @@ void Client::update(double elapsed_time)
 
 void Client::draw_players()
 {
-    static const float vertices[][3] = {
-        {1, 1, 1},
-        {-1, 1, 1},
-        {-1, -1, 1},
-        {1, -1, 1},
-        {1, 1, -1},
-        {-1, 1, -1},
-        {-1, -1, -1},
-        {1, -1, -1}
-    };
-    static const int quads[][4] = {
-        {0, 1, 2, 3},
-        {0, 3, 7, 4},
-        {2, 1, 5, 6},
-        {3, 2, 6, 7},
-        {1, 0, 4, 5},
-        {5, 4, 7, 6}
-    };
+    GLint uniform_locations[4];
+    const char *uniforms[] = { "ambient", "diffuse", "specular", "shininess" };
+    m_obj_program.get_uniform_locations(uniforms, 4, uniform_locations);
     glPushMatrix();
     glTranslatef(m_player->x, m_player->y, 40);
     glRotatef(m_player->direction * 180.0 / M_PI, 0, 0, 1);
-    glPushAttrib(GL_POLYGON_BIT);
-    glEnable(GL_POLYGON_OFFSET_LINE);
-    for (int t = 0; t <= 1; t++)
+    glUseProgram(m_obj_program.get_id());
+    m_tank_obj.bindBuffers();
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    int stride = m_tank_obj.getStride();
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
+            stride, (GLvoid *) m_tank_obj.getVertexOffset());
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
+            stride, (GLvoid *) m_tank_obj.getNormalOffset());
+    for (map<string, WFObj::Material>::iterator it =
+            m_tank_obj.getMaterials().begin();
+            it != m_tank_obj.getMaterials().end();
+            it++)
     {
-        if (t == 0)
+        WFObj::Material & m = it->second;
+        if (m.flags & WFObj::Material::SHININESS_BIT)
         {
-            glColor3f(0.8, 0, 0);
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glUniform1f(uniform_locations[3], m.shininess);
         }
-        else
+        if (m.flags & WFObj::Material::AMBIENT_BIT)
         {
-            glColor3f(0, 0, 0);
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glUniform4fv(uniform_locations[0], 1, &m.ambient[0]);
         }
-        for (unsigned int i = 0; i < sizeof(quads) / sizeof(quads[0]); i++)
+        if (m.flags & WFObj::Material::DIFFUSE_BIT)
         {
-            glBegin(GL_QUADS);
-            for (int j = 0; j < 4; j++)
-            {
-                const float * vertex = &vertices[quads[i][j]][0];
-                glVertex3f(vertex[0] * 20, vertex[1] * 10, vertex[2] * 6);
-            }
-            glEnd();
+            glUniform4fv(uniform_locations[1], 1, &m.diffuse[0]);
         }
+        if (m.flags & WFObj::Material::SPECULAR_BIT)
+        {
+            glUniform4fv(uniform_locations[2], 1, &m.specular[0]);
+        }
+        glDrawElements(GL_TRIANGLES, m.num_vertices,
+                GL_UNSIGNED_SHORT,
+                (GLvoid *) (sizeof(GLushort) * m.first_vertex));
     }
-    glPopAttrib();
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glUseProgram(0);
     glPopMatrix();
 }
 
