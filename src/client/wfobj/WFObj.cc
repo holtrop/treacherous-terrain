@@ -99,17 +99,17 @@ static void checkGLErrorLine(const char * function, int line)
 
 WFObj::WFObj()
 {
-    if (m_valid)
-    {
-        glDeleteBuffers(1, &m_data_vbo);
-        glDeleteBuffers(1, &m_index_vbo);
-    }
     m_valid = false;
     clear();
 }
 
 WFObj::~WFObj()
 {
+    if (m_valid)
+    {
+        glDeleteBuffers(1, &m_data_vbo);
+        glDeleteBuffers(1, &m_index_vbo);
+    }
 }
 
 void WFObj::clear()
