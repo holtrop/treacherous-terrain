@@ -6,6 +6,7 @@
 #include "refptr.h"
 #include "Map.h"
 #include "Player.h"
+#include "GLProgram.h"
 
 class Client
 {
@@ -25,6 +26,7 @@ class Client
         refptr<Player> m_player;
         int m_width;
         int m_height;
+        GLProgram m_obj_program;
 };
 
 #endif

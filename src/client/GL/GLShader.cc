@@ -35,7 +35,17 @@ bool GLShader::create(GLenum shaderType, const char *source)
         }
 
         GLint log_length;
-        cerr << "Error compiling shader" << endl;
+        cerr << "Error compiling ";
+        switch (shaderType)
+        {
+            case GL_VERTEX_SHADER:
+                cerr << "vertex";
+                break;
+            case GL_FRAGMENT_SHADER:
+                cerr << "fragment";
+                break;
+        }
+        cerr << " shader" << endl;
         glGetShaderiv(m_id, GL_INFO_LOG_LENGTH, &log_length);
         if (log_length > 0)
         {

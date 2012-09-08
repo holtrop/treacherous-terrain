@@ -7,6 +7,7 @@
 #include "Client.h"
 #include <stdio.h>
 #include <iostream>
+#include "ccfs.h"
 
 using namespace std;
 
@@ -35,6 +36,22 @@ Client::Client(bool fullscreen, bool compatibility_context,
     m_player->x = 1250;
     m_player->y = 1000;
     m_player->direction = M_PI_2;
+    GLProgram::AttributeBinding obj_attrib_bindings[] = {
+        {0, "pos"},
+        {1, "normal"},
+        {0, NULL}
+    };
+    const char *v_source = (const char *) CFS.get_file("shaders/obj_v.glsl", NULL);
+    const char *f_source = (const char *) CFS.get_file("shaders/obj_f.glsl", NULL);
+    if (v_source == NULL || f_source == NULL)
+    {
+        cerr << "Error loading shader sources" << endl;
+    }
+    else if (!m_obj_program.create(v_source, f_source,
+                obj_attrib_bindings))
+    {
+        cerr << "Error creating obj program" << endl;
+    }
 }
 
 void Client::run()
