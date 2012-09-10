@@ -2,6 +2,8 @@
 #ifndef HEXTILE_H
 #define HEXTILE_H
 
+#define HEX_WIDTH_TO_HEIGHT 1.1547005383792517
+
 class HexTile
 {
     public:

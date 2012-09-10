@@ -6,12 +6,12 @@
 
 /* points of a horizontal hexagon 2.0 units high */
 static const float hex_points[][2] = {
-    {1.1547005383792517, 0.0},
-    {0.577350269189626, 1.0},
-    {-0.5773502691896256, 1.0},
-    {-1.1547005383792517, 0.0},
-    {-0.5773502691896264, -1.0},
-    {0.577350269189626, -1.0}
+    {HEX_WIDTH_TO_HEIGHT, 0.0},
+    {HEX_WIDTH_TO_HEIGHT / 2.0, 1.0},
+    {-HEX_WIDTH_TO_HEIGHT / 2.0, 1.0},
+    {-HEX_WIDTH_TO_HEIGHT, 0.0},
+    {-HEX_WIDTH_TO_HEIGHT / 2.0, -1.0},
+    {HEX_WIDTH_TO_HEIGHT / 2.0, -1.0}
 };
 
 HexTile::HexTile(float x, float y, float size)
