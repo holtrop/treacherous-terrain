@@ -244,25 +244,28 @@ void Client::draw_map()
     {
         for (int x = 0; x < width; x++)
         {
-            glPushMatrix();
-            glTranslatef(span_x * x, span_y * y, 0);
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-            glBegin(GL_QUADS);
-            glColor3f(0.4, 0.4, 0.4);
-            glVertex2f(span_x, span_y);
-            glVertex2f(0, span_y);
-            glVertex2f(0, 0);
-            glVertex2f(span_x, 0);
-            glEnd();
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glBegin(GL_QUADS);
-            glColor3f(1, 1, 1);
-            glVertex2f(span_x, span_y);
-            glVertex2f(0, span_y);
-            glVertex2f(0, 0);
-            glVertex2f(span_x, 0);
-            glEnd();
-            glPopMatrix();
+            if (m_map.tile_present(x, y))
+            {
+                glPushMatrix();
+                glTranslatef(span_x * x, span_y * y, 0);
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                glBegin(GL_QUADS);
+                glColor3f(0.4, 0.4, 0.4);
+                glVertex2f(span_x, span_y);
+                glVertex2f(0, span_y);
+                glVertex2f(0, 0);
+                glVertex2f(span_x, 0);
+                glEnd();
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                glBegin(GL_QUADS);
+                glColor3f(1, 1, 1);
+                glVertex2f(span_x, span_y);
+                glVertex2f(0, span_y);
+                glVertex2f(0, 0);
+                glVertex2f(span_x, 0);
+                glEnd();
+                glPopMatrix();
+            }
         }
     }
     glPopMatrix();
