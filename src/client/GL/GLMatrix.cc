@@ -5,12 +5,32 @@
 
 const GLMatrix GLMatrix::Identity;
 
-GLMatrix::GLMatrix()
+static void normalize(GLfloat * vec)
 {
-    set_identity();
+    GLfloat len = sqrtf(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
+    vec[0] /= len;
+    vec[1] /= len;
+    vec[2] /= len;
 }
 
-void GLMatrix::set_identity()
+static void cross(GLfloat * out, GLfloat * in1, GLfloat * in2)
+{
+    out[0] = in1[1] * in2[2] - in1[2] * in2[1];
+    out[1] = in1[2] * in2[0] - in1[0] * in2[2];
+    out[2] = in1[0] * in2[1] - in1[1] * in2[0];
+}
+
+GLMatrix::GLMatrix()
+{
+    load_identity();
+}
+
+GLMatrix::GLMatrix(const GLMatrix & orig)
+{
+    memcpy(&m_mat, &orig.m_mat, sizeof(m_mat));
+}
+
+void GLMatrix::load_identity()
 {
     memset(m_mat, 0, sizeof(m_mat));
     for (int i = 0; i < 4; i++)
@@ -94,33 +114,62 @@ void GLMatrix::rotate(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 
 void GLMatrix::frustum(GLfloat left, GLfloat right,
         GLfloat bottom, GLfloat top,
-        GLfloat near, GLfloat far)
+        GLfloat z_near, GLfloat z_far)
 {
     GLMatrix mult;
     GLfloat rl = right - left;
     GLfloat tb = top - bottom;
-    GLfloat fn = far - near;
-    mult.m_mat[0][0] = 2 * near / rl;
+    GLfloat fn = z_far - z_near;
+    mult.m_mat[0][0] = 2 * z_near / rl;
     mult.m_mat[2][0] = (right + left) / rl;
-    mult.m_mat[1][1] = 2 * near / tb;
+    mult.m_mat[1][1] = 2 * z_near / tb;
     mult.m_mat[2][1] = (top + bottom) / tb;
-    mult.m_mat[2][2] = - (far + near) / fn;
-    mult.m_mat[3][2] = - 2 * far * near / fn;
+    mult.m_mat[2][2] = - (z_far + z_near) / fn;
+    mult.m_mat[3][2] = - 2 * z_far * z_near / fn;
     mult.m_mat[2][3] = -1.0;
     mult.m_mat[3][3] = 0.0f;
     multiply(mult);
 }
 
+void GLMatrix::look_at(GLfloat eye_x, GLfloat eye_y, GLfloat eye_z,
+        GLfloat center_x, GLfloat center_y, GLfloat center_z,
+        GLfloat up_x, GLfloat up_y, GLfloat up_z)
+{
+    GLfloat forward[3], side[3], up[3];
+    forward[0] = center_x - eye_x;
+    forward[1] = center_y - eye_y;
+    forward[2] = center_z - eye_z;
+    normalize(forward);
+    up[0] = up_x;
+    up[1] = up_y;
+    up[2] = up_z;
+    cross(side, forward, up);
+    normalize(side);
+    cross(up, side, forward);
+    GLMatrix mult;
+    mult.m_mat[0][0] = side[0];
+    mult.m_mat[0][1] = side[1];
+    mult.m_mat[0][2] = side[2];
+    mult.m_mat[1][0] = up[0];
+    mult.m_mat[1][1] = up[1];
+    mult.m_mat[1][2] = up[2];
+    mult.m_mat[2][0] = -forward[0];
+    mult.m_mat[2][1] = -forward[1];
+    mult.m_mat[2][2] = -forward[2];
+    multiply(mult);
+    translate(-eye_x, -eye_y, -eye_z);
+}
+
 void GLMatrix::perspective(GLfloat fovy, GLfloat aspect,
-        GLfloat near, GLfloat far)
+        GLfloat z_near, GLfloat z_far)
 {
     GLMatrix mult;
     GLfloat f = 1.0 / tan(M_PI * fovy / 360.0);
-    GLfloat nf = near - far;
+    GLfloat nf = z_near - z_far;
     mult.m_mat[0][0] = f / aspect;
     mult.m_mat[1][1] = f;
-    mult.m_mat[2][2] = (far + near) / nf;
-    mult.m_mat[3][2] = (2 * far * near) / nf;
+    mult.m_mat[2][2] = (z_far + z_near) / nf;
+    mult.m_mat[3][2] = (2 * z_far * z_near) / nf;
     mult.m_mat[2][3] = -1.0;
     mult.m_mat[3][3] = 0.0f;
     multiply(mult);
@@ -128,17 +177,37 @@ void GLMatrix::perspective(GLfloat fovy, GLfloat aspect,
 
 void GLMatrix::ortho(GLfloat left, GLfloat right,
         GLfloat bottom, GLfloat top,
-        GLfloat near, GLfloat far)
+        GLfloat z_near, GLfloat z_far)
 {
     GLMatrix mult;
     GLfloat rl = right - left;
     GLfloat tb = top - bottom;
-    GLfloat fn = far - near;
+    GLfloat fn = z_far - z_near;
     mult.m_mat[0][0] = 2 / rl;
     mult.m_mat[3][0] = - (right + left) / rl;
     mult.m_mat[1][1] = 2 / tb;
     mult.m_mat[3][1] = - (top + bottom) / tb;
     mult.m_mat[2][2] = -2 / fn;
-    mult.m_mat[3][2] = - (far + near) / fn;
+    mult.m_mat[3][2] = - (z_far + z_near) / fn;
     multiply(mult);
+}
+
+void GLMatrix::to_uniform(GLint uniform)
+{
+    glUniformMatrix4fv(uniform, 1, GL_TRUE, &m_mat[0][0]);
+}
+
+void GLMatrix::push()
+{
+    m_stack.push(Mat4_s());
+    memcpy(&m_stack.top().mat, &m_mat, sizeof(m_mat));
+}
+
+void GLMatrix::pop()
+{
+    if (m_stack.size() > 0)
+    {
+        memcpy(&m_mat, &m_stack.top().mat, sizeof(m_mat));
+        m_stack.pop();
+    }
 }
