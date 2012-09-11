@@ -109,7 +109,7 @@ void GLMatrix::rotate(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
     mult.m_mat[1][3] = 0.0;
     mult.m_mat[2][3] = 0.0;
     mult.m_mat[3][3] = 1.0;
-    *this = *this * mult;
+    multiply(mult);
 }
 
 void GLMatrix::frustum(GLfloat left, GLfloat right,
