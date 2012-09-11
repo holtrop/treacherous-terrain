@@ -1,6 +1,7 @@
 
+#include <cassert>
 #include <math.h>
-#include <GL/glew.h>
+#include GL_INCLUDE_FILE
 #include <SFML/OpenGL.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
@@ -38,10 +39,13 @@ Client::Client(bool fullscreen, bool compatibility_context,
     sf::ContextSettings cs = sf::ContextSettings(0, 0, antialias_level,
             opengl_major, opengl_minor);
     m_window = new sf::Window(mode, "Treacherous Terrain", style, cs);
-    GLenum err = glewInit();
-    if (err != GLEW_OK)
+    if (gl3wInit())
     {
-        cerr << "GLEW Initialization error: " << glewGetErrorString(err) << endl;
+        cerr << "Failed to initialize GL3W" << endl;
+    }
+    if (!gl3wIsSupported(3, 0))
+    {
+        cerr << "OpenGL 3.0 is not supported!" << endl;
     }
     initgl();
     resize_window(m_window->getSize().x, m_window->getSize().y);
@@ -69,6 +73,20 @@ Client::Client(bool fullscreen, bool compatibility_context,
     {
         cerr << "Error loading tank model" << endl;
     }
+    static const struct
+    {
+        GLfloat pos[3];
+        GLfloat normal[3];
+    } tile_attribs[] = {
+        {{0.5, 0.5, 0}, {0, 0, 1}},
+        {{-0.5, 0.5, 0}, {0, 0, 1}},
+        {{-0.5, -0.5, 0}, {0, 0, 1}},
+        {{0.5, -0.5, 0}, {0, 0, 1}}
+    };
+    assert(sizeof(tile_attribs) == sizeof(GLfloat) * 6 * 4);
+    m_tile_buffer.create(GL_ARRAY_BUFFER, GL_STATIC_DRAW, &tile_attribs, sizeof(tile_attribs));
+    static const GLushort tile_indices[] = {0, 1, 2, 3};
+    m_tile_index_buffer.create(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW, &tile_indices, sizeof(tile_indices));
 }
 
 void Client::run()
@@ -112,11 +130,6 @@ void Client::run()
 
         double dir_x = cos(m_player->direction);
         double dir_y = sin(m_player->direction);
-        glLoadIdentity();
-        gluLookAt(m_player->x - dir_x * 100, m_player->y - dir_y * 100, 150,
-                m_player->x, m_player->y, 100,
-                0, 0, 1);
-
         m_modelview.load_identity();
         m_modelview.look_at(
                 m_player->x - dir_x * 100, m_player->y - dir_y * 100, 150,
@@ -133,10 +146,8 @@ void Client::run()
 
 void Client::initgl()
 {
-    glShadeModel(GL_SMOOTH);
-    glDisable(GL_LIGHTING);
     glEnable(GL_DEPTH_TEST);
-    glPolygonOffset(0, -2);
+    glPolygonOffset(1, 1);
 }
 
 void Client::resize_window(int width, int height)
@@ -146,12 +157,8 @@ void Client::resize_window(int width, int height)
     sf::Mouse::setPosition(sf::Vector2i(m_width / 2, m_height / 2), *m_window);
     glViewport(0, 0, width, height);
     float aspect = (float)width / (float)height;
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(60.0f, aspect, 1.0f, 5000.0f);
     m_projection.load_identity();
     m_projection.perspective(60.0f, aspect, 1.0f, 5000.0f);
-    glMatrixMode(GL_MODELVIEW);
 }
 
 void Client::update(double elapsed_time)
@@ -194,7 +201,7 @@ void Client::draw_players()
     m_modelview.push();
     m_modelview.translate(m_player->x, m_player->y, 40);
     m_modelview.rotate(m_player->direction * 180.0 / M_PI, 0, 0, 1);
-    glUseProgram(m_obj_program.get_id());
+    m_obj_program.use();
     m_tank_obj.bindBuffers();
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
@@ -242,39 +249,45 @@ void Client::draw_map()
 {
     const int width = m_map.get_width();
     const int height = m_map.get_height();
-    const float span_x = 50;
-    const float span_y = 50;
-    glPushAttrib(GL_POLYGON_BIT);
-    glEnable(GL_POLYGON_OFFSET_LINE);
-    glPushMatrix();
+    const float tile_size = 50;
+    GLint uniform_locations[7];
+    const char *uniforms[] = { "ambient", "diffuse", "specular", "shininess", "scale", "projection", "modelview" };
+    m_obj_program.get_uniform_locations(uniforms, 7, uniform_locations);
+    m_obj_program.use();
+    glUniform1f(uniform_locations[4], tile_size);
+    m_projection.to_uniform(uniform_locations[5]);
+    m_tile_buffer.bind();
+    m_tile_index_buffer.bind();
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
+            6u * sizeof(GLfloat), (GLvoid *) 0u);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
+            6u * sizeof(GLfloat), (GLvoid *) (3u * sizeof(GLfloat)));
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glUniform1f(uniform_locations[3], 2);
+    GLfloat ambient[] = {1, 1, 1, 1};
+    glUniform4fv(uniform_locations[0], 1, &ambient[0]);
+    GLfloat tile_diffuse[] = {0.4, 0.4, 0.4, 1};
+    GLfloat tile_highlight[] = {1, 1, 1, 1};
+    GLfloat specular[] = {1, 1, 1, 1};
+    glUniform4fv(uniform_locations[2], 1, &specular[0]);
     for (int y = 0; y < height; y++)
     {
         for (int x = 0; x < width; x++)
         {
             if (m_map.tile_present(x, y))
             {
-                glPushMatrix();
-                glTranslatef(span_x * x, span_y * y, 0);
-                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-                glBegin(GL_QUADS);
-                glColor3f(0.4, 0.4, 0.4);
-                glVertex2f(span_x, span_y);
-                glVertex2f(0, span_y);
-                glVertex2f(0, 0);
-                glVertex2f(span_x, 0);
-                glEnd();
-                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-                glBegin(GL_QUADS);
-                glColor3f(1, 1, 1);
-                glVertex2f(span_x, span_y);
-                glVertex2f(0, span_y);
-                glVertex2f(0, 0);
-                glVertex2f(span_x, 0);
-                glEnd();
-                glPopMatrix();
+                m_modelview.push();
+                m_modelview.translate(tile_size * x, tile_size * y, 0);
+                m_modelview.to_uniform(uniform_locations[6]);
+                glUniform4fv(uniform_locations[1], 1, &tile_diffuse[0]);
+                glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_SHORT, NULL);
+                glUniform4fv(uniform_locations[1], 1, &tile_highlight[0]);
+                glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, NULL);
+                m_modelview.pop();
             }
         }
     }
-    glPopMatrix();
-    glPopAttrib();
+    glDisable(GL_POLYGON_OFFSET_LINE);
 }

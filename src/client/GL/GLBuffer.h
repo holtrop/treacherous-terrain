@@ -2,7 +2,7 @@
 #ifndef GLBUFFER_H
 #define GLBUFFER_H
 
-#include <GL/glew.h>
+#include GL_INCLUDE_FILE
 
 class GLBuffer
 {

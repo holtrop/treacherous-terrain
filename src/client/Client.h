@@ -9,6 +9,7 @@
 #include "GLProgram.h"
 #include "WFObj.h"
 #include "GLMatrix.h"
+#include "GLBuffer.h"
 
 class Client
 {
@@ -32,6 +33,8 @@ class Client
         WFObj m_tank_obj;
         GLMatrix m_projection;
         GLMatrix m_modelview;
+        GLBuffer m_tile_buffer;
+        GLBuffer m_tile_index_buffer;
 };
 
 #endif

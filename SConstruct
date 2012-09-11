@@ -49,7 +49,7 @@ LIBPATH = ['%s/lib' % SFML_PATH]
 CPPFLAGS = []
 CPPFLAGS += map(lambda x: '-I' + x, find_dirs_under('src/common'))
 CPPFLAGS_client = ['-I%s/include' % SFML_PATH,
-    '-DGL_INCLUDE_FILE=\\"GL/glew.h\\"']
+    '-DGL_INCLUDE_FILE=\\"GL3/gl3w.h\\"']
 CPPFLAGS_client += map(lambda x: '-I' + x, find_dirs_under('src/client'))
 CPPFLAGS_server = map(lambda x: '-I' + x, find_dirs_under('src/server'))
 
@@ -59,22 +59,14 @@ if platform == 'windows':
     CC = 'i686-pc-mingw32-gcc'
     MINGW_DIR = '/usr/i686-pc-mingw32/sys-root/mingw/bin'
     LIBS_client += ['sfml-graphics-s', 'sfml-window-s', 'sfml-system-s',
-            'sfml-network-s', 'glew32', 'opengl32', 'glu32', 'mingw32']
+            'sfml-network-s', 'opengl32', 'glu32', 'mingw32']
     LIBS_server += ['sfml-network-s', 'mingw32']
     LINKFLAGS.append('-static-libstdc++')
     libs_to_copy.append('%s/libgcc_s_dw2-1.dll' % MINGW_DIR)
     CPPFLAGS.append('-DSFML_STATIC')
-    CPPFLAGS.append('-DGLEW_STATIC')
-    GLEW_VERSION = '1.9.0'
-    GLEW_PATH = '/c/apps/glew-%s' % GLEW_VERSION
-    if 'GLEW_PATH' in os.environ:
-        GLEW_PATH = os.environ['GLEW_PATH']
-    CPPFLAGS.append('-I%s/include' % GLEW_PATH)
-    LIBPATH.append('%s/lib' % GLEW_PATH)
-    libs_to_copy.append('%s/bin/glew32.dll' % GLEW_PATH)
 else:
     LIBS_client += ['sfml-network', 'sfml-window', 'sfml-graphics',
-            'sfml-system', 'GLEW', 'GL', 'GLU']
+            'sfml-system', 'GL', 'GLU']
     LIBS_server += ['sfml-network']
     LINKFLAGS.append('-Wl,-R%s/lib' % SFML_PATH)
 
