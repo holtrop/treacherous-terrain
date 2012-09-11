@@ -110,17 +110,21 @@ void Client::run()
         update(elapsed_time);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glPushMatrix();
         double dir_x = cos(m_player->direction);
         double dir_y = sin(m_player->direction);
+        glLoadIdentity();
         gluLookAt(m_player->x - dir_x * 100, m_player->y - dir_y * 100, 150,
+                m_player->x, m_player->y, 100,
+                0, 0, 1);
+
+        m_modelview.load_identity();
+        m_modelview.look_at(
+                m_player->x - dir_x * 100, m_player->y - dir_y * 100, 150,
                 m_player->x, m_player->y, 100,
                 0, 0, 1);
 
         draw_players();
         draw_map();
-
-        glPopMatrix();
 
         m_window->display();
         last_time = current_time;
@@ -144,9 +148,10 @@ void Client::resize_window(int width, int height)
     float aspect = (float)width / (float)height;
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(60.0f, aspect, 0.01, 5000.0);
+    gluPerspective(60.0f, aspect, 1.0f, 5000.0f);
+    m_projection.load_identity();
+    m_projection.perspective(60.0f, aspect, 1.0f, 5000.0f);
     glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
 }
 
 void Client::update(double elapsed_time)
@@ -183,12 +188,12 @@ void Client::update(double elapsed_time)
 
 void Client::draw_players()
 {
-    GLint uniform_locations[5];
-    const char *uniforms[] = { "ambient", "diffuse", "specular", "shininess", "scale" };
-    m_obj_program.get_uniform_locations(uniforms, 5, uniform_locations);
-    glPushMatrix();
-    glTranslatef(m_player->x, m_player->y, 40);
-    glRotatef(m_player->direction * 180.0 / M_PI, 0, 0, 1);
+    GLint uniform_locations[7];
+    const char *uniforms[] = { "ambient", "diffuse", "specular", "shininess", "scale", "projection", "modelview" };
+    m_obj_program.get_uniform_locations(uniforms, 7, uniform_locations);
+    m_modelview.push();
+    m_modelview.translate(m_player->x, m_player->y, 40);
+    m_modelview.rotate(m_player->direction * 180.0 / M_PI, 0, 0, 1);
     glUseProgram(m_obj_program.get_id());
     m_tank_obj.bindBuffers();
     glEnableVertexAttribArray(0);
@@ -199,6 +204,8 @@ void Client::draw_players()
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
             stride, (GLvoid *) m_tank_obj.getNormalOffset());
     glUniform1f(uniform_locations[4], 20.0f);
+    m_projection.to_uniform(uniform_locations[5]);
+    m_modelview.to_uniform(uniform_locations[6]);
     for (map<string, WFObj::Material>::iterator it =
             m_tank_obj.getMaterials().begin();
             it != m_tank_obj.getMaterials().end();
@@ -228,7 +235,7 @@ void Client::draw_players()
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
     glUseProgram(0);
-    glPopMatrix();
+    m_modelview.pop();
 }
 
 void Client::draw_map()

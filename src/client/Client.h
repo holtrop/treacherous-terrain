@@ -8,6 +8,7 @@
 #include "Player.h"
 #include "GLProgram.h"
 #include "WFObj.h"
+#include "GLMatrix.h"
 
 class Client
 {
@@ -29,6 +30,8 @@ class Client
         int m_height;
         GLProgram m_obj_program;
         WFObj m_tank_obj;
+        GLMatrix m_projection;
+        GLMatrix m_modelview;
 };
 
 #endif

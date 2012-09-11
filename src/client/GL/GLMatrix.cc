@@ -148,13 +148,13 @@ void GLMatrix::look_at(GLfloat eye_x, GLfloat eye_y, GLfloat eye_z,
     cross(up, side, forward);
     GLMatrix mult;
     mult.m_mat[0][0] = side[0];
-    mult.m_mat[0][1] = side[1];
-    mult.m_mat[0][2] = side[2];
-    mult.m_mat[1][0] = up[0];
+    mult.m_mat[1][0] = side[1];
+    mult.m_mat[2][0] = side[2];
+    mult.m_mat[0][1] = up[0];
     mult.m_mat[1][1] = up[1];
-    mult.m_mat[1][2] = up[2];
-    mult.m_mat[2][0] = -forward[0];
-    mult.m_mat[2][1] = -forward[1];
+    mult.m_mat[2][1] = up[2];
+    mult.m_mat[0][2] = -forward[0];
+    mult.m_mat[1][2] = -forward[1];
     mult.m_mat[2][2] = -forward[2];
     multiply(mult);
     translate(-eye_x, -eye_y, -eye_z);
@@ -194,7 +194,7 @@ void GLMatrix::ortho(GLfloat left, GLfloat right,
 
 void GLMatrix::to_uniform(GLint uniform)
 {
-    glUniformMatrix4fv(uniform, 1, GL_TRUE, &m_mat[0][0]);
+    glUniformMatrix4fv(uniform, 1, GL_FALSE, &m_mat[0][0]);
 }
 
 void GLMatrix::push()
