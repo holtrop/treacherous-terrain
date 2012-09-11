@@ -1,8 +1,11 @@
 
+#include <math.h>
 #include "HexTile.h"
 
-#define COS_60 0.5
-#define SIN_60 0.8660254037844386
+#define COS_60 0.5f
+#define SIN_60 0.8660254037844386f
+#define COS_120 (-0.5f)
+#define SIN_120 SIN_60
 
 /* points of a horizontal hexagon 2.0 units high */
 static const float hex_points[][2] = {
@@ -37,15 +40,13 @@ bool HexTile::point_within(float x, float y)
      *  x' = x * 0.5 - y * 0.8660254
      *  y' = y * 0.5 + x * 0.8660254
      */
-    if ((y > 1.0) || (y < -1.0))
+    if (fabsf(y) > 1.0)
         return false;
-    float rx = x * COS_60 - y * SIN_60;
-    float ry = y * COS_60 + x * SIN_60;
-    if ((ry > 1.0) || (ry < -1.0))
+    float y_60 = y * COS_60 + x * SIN_60;
+    if (fabsf(y_60) > 1.0)
         return false;
-    x = rx * COS_60 - ry * SIN_60;
-    y = ry * COS_60 + rx * SIN_60;
-    if ((y > 1.0) || (y < -1.0))
+    float y_120 = y * COS_120 + x * SIN_120;
+    if (fabsf(y_120) > 1.0)
         return false;
     return true;
 }
