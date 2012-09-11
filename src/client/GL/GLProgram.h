@@ -19,6 +19,7 @@ class GLProgram
         GLuint get_id() { return m_id; }
         GLint get_uniform_location(const char *name);
         void get_uniform_locations(const char **names, int num, GLint *locs);
+        void use() { glUseProgram(m_id); }
     protected:
         GLuint m_id;
         GLShader m_v_shader;

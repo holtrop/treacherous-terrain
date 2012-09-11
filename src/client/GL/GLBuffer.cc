@@ -16,6 +16,7 @@ GLBuffer::~GLBuffer()
 
 bool GLBuffer::create(GLenum target, GLenum usage, const void *ptr, size_t sz)
 {
+    m_target = target;
     glGenBuffers(1, &m_id);
     if (m_id > 0)
     {
