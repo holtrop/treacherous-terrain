@@ -13,5 +13,5 @@ void main(void)
 {
     gl_Position = projection * modelview * vec4(scale * pos, 1);
     pos_i = gl_Position.xyz;
-    normal_i = modelview * vec4(normal, 1);
+    normal_i = modelview * vec4(normal, 0);
 }
