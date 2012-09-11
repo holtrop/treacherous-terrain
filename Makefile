@@ -1,4 +1,6 @@
 
+export SCONSFLAGS := -Q
+
 all:
 	@scons
 
