@@ -31,10 +31,9 @@ class Client
         int m_height;
         GLProgram m_obj_program;
         WFObj m_tank_obj;
+        WFObj m_tile_obj;
         GLMatrix m_projection;
         GLMatrix m_modelview;
-        GLBuffer m_tile_buffer;
-        GLBuffer m_tile_index_buffer;
 };
 
 #endif

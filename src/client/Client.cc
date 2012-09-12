@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <iostream>
 #include "ccfs.h"
+#include "HexTile.h"
 
 using namespace std;
 
@@ -73,20 +74,10 @@ Client::Client(bool fullscreen, bool compatibility_context,
     {
         cerr << "Error loading tank model" << endl;
     }
-    static const struct
+    if (!m_tile_obj.load("models/hex-tile.obj", load_file))
     {
-        GLfloat pos[3];
-        GLfloat normal[3];
-    } tile_attribs[] = {
-        {{0.5, 0.5, 0}, {0, 0, 1}},
-        {{-0.5, 0.5, 0}, {0, 0, 1}},
-        {{-0.5, -0.5, 0}, {0, 0, 1}},
-        {{0.5, -0.5, 0}, {0, 0, 1}}
-    };
-    assert(sizeof(tile_attribs) == sizeof(GLfloat) * 6 * 4);
-    m_tile_buffer.create(GL_ARRAY_BUFFER, GL_STATIC_DRAW, &tile_attribs, sizeof(tile_attribs));
-    static const GLushort tile_indices[] = {0, 1, 2, 3};
-    m_tile_index_buffer.create(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW, &tile_indices, sizeof(tile_indices));
+        cerr << "Error loading hex-tile model" << endl;
+    }
 }
 
 void Client::run()
@@ -256,22 +247,14 @@ void Client::draw_map()
     m_obj_program.use();
     glUniform1f(uniform_locations[4], tile_size);
     m_projection.to_uniform(uniform_locations[5]);
-    m_tile_buffer.bind();
-    m_tile_index_buffer.bind();
+    m_tile_obj.bindBuffers();
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
+    int stride = m_tile_obj.getStride();
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
-            6u * sizeof(GLfloat), (GLvoid *) 0u);
+            stride, (GLvoid *) m_tile_obj.getVertexOffset());
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
-            6u * sizeof(GLfloat), (GLvoid *) (3u * sizeof(GLfloat)));
-    glEnable(GL_POLYGON_OFFSET_FILL);
-    glUniform1f(uniform_locations[3], 2);
-    GLfloat ambient[] = {1, 1, 1, 1};
-    glUniform4fv(uniform_locations[0], 1, &ambient[0]);
-    GLfloat tile_diffuse[] = {0.4, 0.4, 0.4, 1};
-    GLfloat tile_highlight[] = {1, 1, 1, 1};
-    GLfloat specular[] = {1, 1, 1, 1};
-    glUniform4fv(uniform_locations[2], 1, &specular[0]);
+            stride, (GLvoid *) m_tile_obj.getNormalOffset());
     for (int y = 0; y < height; y++)
     {
         for (int x = 0; x < width; x++)
@@ -279,15 +262,38 @@ void Client::draw_map()
             if (m_map.tile_present(x, y))
             {
                 m_modelview.push();
-                m_modelview.translate(tile_size * x, tile_size * y, 0);
+                float cx = x * tile_size * HEX_WIDTH_TO_HEIGHT * 0.75;
+                float cy = (y + ((x & 1) ? 0.5 : 0.0)) * tile_size;
+                m_modelview.translate(cx, cy, 0);
                 m_modelview.to_uniform(uniform_locations[6]);
-                glUniform4fv(uniform_locations[1], 1, &tile_diffuse[0]);
-                glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_SHORT, NULL);
-                glUniform4fv(uniform_locations[1], 1, &tile_highlight[0]);
-                glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, NULL);
+                for (map<string, WFObj::Material>::iterator it =
+                        m_tile_obj.getMaterials().begin();
+                        it != m_tile_obj.getMaterials().end();
+                        it++)
+                {
+                    WFObj::Material & m = it->second;
+                    if (m.flags & WFObj::Material::SHININESS_BIT)
+                    {
+                        glUniform1f(uniform_locations[3], m.shininess);
+                    }
+                    if (m.flags & WFObj::Material::AMBIENT_BIT)
+                    {
+                        glUniform4fv(uniform_locations[0], 1, &m.ambient[0]);
+                    }
+                    if (m.flags & WFObj::Material::DIFFUSE_BIT)
+                    {
+                        glUniform4fv(uniform_locations[1], 1, &m.diffuse[0]);
+                    }
+                    if (m.flags & WFObj::Material::SPECULAR_BIT)
+                    {
+                        glUniform4fv(uniform_locations[2], 1, &m.specular[0]);
+                    }
+                    glDrawElements(GL_TRIANGLES, m.num_vertices,
+                            GL_UNSIGNED_SHORT,
+                            (GLvoid *) (sizeof(GLushort) * m.first_vertex));
+                }
                 m_modelview.pop();
             }
         }
     }
-    glDisable(GL_POLYGON_OFFSET_LINE);
 }
