@@ -123,8 +123,8 @@ void Client::run()
         double dir_y = sin(m_player->direction);
         m_modelview.load_identity();
         m_modelview.look_at(
-                m_player->x - dir_x * 100, m_player->y - dir_y * 100, 150,
-                m_player->x, m_player->y, 100,
+                m_player->x - dir_x * 25, m_player->y - dir_y * 25, 30,
+                m_player->x, m_player->y, 20,
                 0, 0, 1);
 
         draw_players();
@@ -154,7 +154,7 @@ void Client::resize_window(int width, int height)
 
 void Client::update(double elapsed_time)
 {
-    const double move_speed = 300.0;
+    const double move_speed = 75.0;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
     {
         double direction = m_player->direction + M_PI_2;
@@ -190,7 +190,7 @@ void Client::draw_players()
     const char *uniforms[] = { "ambient", "diffuse", "specular", "shininess", "scale", "projection", "modelview" };
     m_obj_program.get_uniform_locations(uniforms, 7, uniform_locations);
     m_modelview.push();
-    m_modelview.translate(m_player->x, m_player->y, 40);
+    m_modelview.translate(m_player->x, m_player->y, 4);
     m_modelview.rotate(m_player->direction * 180.0 / M_PI, 0, 0, 1);
     m_obj_program.use();
     m_tank_obj.bindBuffers();
@@ -201,7 +201,7 @@ void Client::draw_players()
             stride, (GLvoid *) m_tank_obj.getVertexOffset());
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
             stride, (GLvoid *) m_tank_obj.getNormalOffset());
-    glUniform1f(uniform_locations[4], 20.0f);
+    glUniform1f(uniform_locations[4], 2.0f);
     m_projection.to_uniform(uniform_locations[5]);
     m_modelview.to_uniform(uniform_locations[6]);
     for (map<string, WFObj::Material>::iterator it =
