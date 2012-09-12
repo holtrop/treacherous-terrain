@@ -9,6 +9,9 @@ class HexTile
     public:
         HexTile(float x, float y, float size);
         bool point_within(float x, float y);
+        float get_x() { return m_x; }
+        float get_y() { return m_y; }
+        float get_size() { return m_size; }
     protected:
         float m_x;
         float m_y;

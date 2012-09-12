@@ -51,8 +51,8 @@ Client::Client(bool fullscreen, bool compatibility_context,
     initgl();
     resize_window(m_window->getSize().x, m_window->getSize().y);
     m_player = new Player();
-    m_player->x = 1250;
-    m_player->y = 1000;
+    m_player->x = 0;
+    m_player->y = 0;
     m_player->direction = M_PI_2;
     GLProgram::AttributeBinding obj_attrib_bindings[] = {
         {0, "pos"},
@@ -262,8 +262,8 @@ void Client::draw_map()
             if (m_map.tile_present(x, y))
             {
                 m_modelview.push();
-                float cx = x * tile_size * HEX_WIDTH_TO_HEIGHT * 0.75;
-                float cy = (y + ((x & 1) ? 0.5 : 0.0)) * tile_size;
+                float cx = m_map.get_tile(x, y)->get_x();
+                float cy = m_map.get_tile(x, y)->get_y();
                 m_modelview.translate(cx, cy, 0);
                 m_modelview.to_uniform(uniform_locations[6]);
                 for (map<string, WFObj::Material>::iterator it =
