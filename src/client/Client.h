@@ -36,6 +36,8 @@ class Client
         WFObj m_tile_obj;
         GLMatrix m_projection;
         GLMatrix m_modelview;
+        GLBuffer m_overlay_hex_attributes;
+        GLBuffer m_overlay_hex_indices;
 };
 
 #endif

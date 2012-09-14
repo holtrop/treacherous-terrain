@@ -32,6 +32,19 @@ static const char *obj_uniform_names[] = {
 #define OBJ_MODELVIEW obj_uniform_locations[6]
     "modelview"
 };
+/* points of a horizontal hexagon 1.0 units high */
+static const float overlay_hex_attributes[][2] = {
+    {0.0, 0.0},
+    {HEX_WIDTH_TO_HEIGHT / 2.0, 0.0},
+    {HEX_WIDTH_TO_HEIGHT / 4.0, 0.5},
+    {-HEX_WIDTH_TO_HEIGHT / 4.0, 0.5},
+    {-HEX_WIDTH_TO_HEIGHT / 2.0, 0.0},
+    {-HEX_WIDTH_TO_HEIGHT / 4.0, -0.5},
+    {HEX_WIDTH_TO_HEIGHT / 4.0, -0.5}
+};
+static const GLshort overlay_hex_indices[] = {
+    0, 1, 2, 3, 4, 5, 6
+};
 
 static bool load_file(const char *fname, WFObj::Buffer & buff)
 {
@@ -102,6 +115,18 @@ bool Client::initgl()
     if (!m_tile_obj.load("models/hex-tile.obj", load_file))
     {
         cerr << "Error loading hex-tile model" << endl;
+        return false;
+    }
+    if (!m_overlay_hex_attributes.create(GL_ARRAY_BUFFER, GL_STATIC_DRAW,
+                overlay_hex_attributes, sizeof(overlay_hex_attributes)))
+    {
+        cerr << "Error creating overlay hex attribute buffer" << endl;
+        return false;
+    }
+    if (!m_overlay_hex_indices.create(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW,
+                overlay_hex_indices, sizeof(overlay_hex_indices)))
+    {
+        cerr << "Error creating overlay hex indices buffer" << endl;
         return false;
     }
     m_obj_program.get_uniform_locations(obj_uniform_names, NUM_OBJ_UNIFORMS,
