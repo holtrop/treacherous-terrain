@@ -13,6 +13,25 @@ using namespace std;
 
 #define OPENGL_CONTEXT_MAJOR 3
 #define OPENGL_CONTEXT_MINOR 0
+#define NUM_OBJ_UNIFORMS 7
+
+static GLint obj_uniform_locations[NUM_OBJ_UNIFORMS];
+static const char *obj_uniform_names[] = {
+#define OBJ_AMBIENT obj_uniform_locations[0]
+    "ambient",
+#define OBJ_DIFFUSE obj_uniform_locations[1]
+    "diffuse",
+#define OBJ_SPECULAR obj_uniform_locations[2]
+    "specular",
+#define OBJ_SHININESS obj_uniform_locations[3]
+    "shininess",
+#define OBJ_SCALE obj_uniform_locations[4]
+    "scale",
+#define OBJ_PROJECTION obj_uniform_locations[5]
+    "projection",
+#define OBJ_MODELVIEW obj_uniform_locations[6]
+    "modelview"
+};
 
 static bool load_file(const char *fname, WFObj::Buffer & buff)
 {
@@ -85,6 +104,9 @@ bool Client::initgl()
         cerr << "Error loading hex-tile model" << endl;
         return false;
     }
+    m_obj_program.get_uniform_locations(obj_uniform_names, NUM_OBJ_UNIFORMS,
+            obj_uniform_locations);
+    m_obj_program.use();
     return true;
 }
 
@@ -119,13 +141,9 @@ void Client::redraw()
 
 void Client::draw_players()
 {
-    GLint uniform_locations[7];
-    const char *uniforms[] = { "ambient", "diffuse", "specular", "shininess", "scale", "projection", "modelview" };
-    m_obj_program.get_uniform_locations(uniforms, 7, uniform_locations);
     m_modelview.push();
     m_modelview.translate(m_player->x, m_player->y, 4);
     m_modelview.rotate(m_player->direction * 180.0 / M_PI, 0, 0, 1);
-    m_obj_program.use();
     m_tank_obj.bindBuffers();
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
@@ -134,9 +152,9 @@ void Client::draw_players()
             stride, (GLvoid *) m_tank_obj.getVertexOffset());
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
             stride, (GLvoid *) m_tank_obj.getNormalOffset());
-    glUniform1f(uniform_locations[4], 2.0f);
-    m_projection.to_uniform(uniform_locations[5]);
-    m_modelview.to_uniform(uniform_locations[6]);
+    glUniform1f(OBJ_SCALE, 2.0f);
+    m_projection.to_uniform(OBJ_PROJECTION);
+    m_modelview.to_uniform(OBJ_MODELVIEW);
     for (map<string, WFObj::Material>::iterator it =
             m_tank_obj.getMaterials().begin();
             it != m_tank_obj.getMaterials().end();
@@ -145,19 +163,19 @@ void Client::draw_players()
         WFObj::Material & m = it->second;
         if (m.flags & WFObj::Material::SHININESS_BIT)
         {
-            glUniform1f(uniform_locations[3], m.shininess);
+            glUniform1f(OBJ_SHININESS, m.shininess);
         }
         if (m.flags & WFObj::Material::AMBIENT_BIT)
         {
-            glUniform4fv(uniform_locations[0], 1, &m.ambient[0]);
+            glUniform4fv(OBJ_AMBIENT, 1, &m.ambient[0]);
         }
         if (m.flags & WFObj::Material::DIFFUSE_BIT)
         {
-            glUniform4fv(uniform_locations[1], 1, &m.diffuse[0]);
+            glUniform4fv(OBJ_DIFFUSE, 1, &m.diffuse[0]);
         }
         if (m.flags & WFObj::Material::SPECULAR_BIT)
         {
-            glUniform4fv(uniform_locations[2], 1, &m.specular[0]);
+            glUniform4fv(OBJ_SPECULAR, 1, &m.specular[0]);
         }
         glDrawElements(GL_TRIANGLES, m.num_vertices,
                 GL_UNSIGNED_SHORT,
@@ -165,7 +183,6 @@ void Client::draw_players()
     }
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
-    glUseProgram(0);
     m_modelview.pop();
 }
 
@@ -174,12 +191,8 @@ void Client::draw_map()
     const int width = m_map.get_width();
     const int height = m_map.get_height();
     const float tile_size = 50;
-    GLint uniform_locations[7];
-    const char *uniforms[] = { "ambient", "diffuse", "specular", "shininess", "scale", "projection", "modelview" };
-    m_obj_program.get_uniform_locations(uniforms, 7, uniform_locations);
-    m_obj_program.use();
-    glUniform1f(uniform_locations[4], tile_size);
-    m_projection.to_uniform(uniform_locations[5]);
+    glUniform1f(OBJ_SCALE, tile_size);
+    m_projection.to_uniform(OBJ_PROJECTION);
     m_tile_obj.bindBuffers();
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
@@ -198,7 +211,7 @@ void Client::draw_map()
                 float cx = m_map.get_tile(x, y)->get_x();
                 float cy = m_map.get_tile(x, y)->get_y();
                 m_modelview.translate(cx, cy, 0);
-                m_modelview.to_uniform(uniform_locations[6]);
+                m_modelview.to_uniform(OBJ_MODELVIEW);
                 for (map<string, WFObj::Material>::iterator it =
                         m_tile_obj.getMaterials().begin();
                         it != m_tile_obj.getMaterials().end();
@@ -207,19 +220,19 @@ void Client::draw_map()
                     WFObj::Material & m = it->second;
                     if (m.flags & WFObj::Material::SHININESS_BIT)
                     {
-                        glUniform1f(uniform_locations[3], m.shininess);
+                        glUniform1f(OBJ_SHININESS, m.shininess);
                     }
                     if (m.flags & WFObj::Material::AMBIENT_BIT)
                     {
-                        glUniform4fv(uniform_locations[0], 1, &m.ambient[0]);
+                        glUniform4fv(OBJ_AMBIENT, 1, &m.ambient[0]);
                     }
                     if (m.flags & WFObj::Material::DIFFUSE_BIT)
                     {
-                        glUniform4fv(uniform_locations[1], 1, &m.diffuse[0]);
+                        glUniform4fv(OBJ_DIFFUSE, 1, &m.diffuse[0]);
                     }
                     if (m.flags & WFObj::Material::SPECULAR_BIT)
                     {
-                        glUniform4fv(uniform_locations[2], 1, &m.specular[0]);
+                        glUniform4fv(OBJ_SPECULAR, 1, &m.specular[0]);
                     }
                     glDrawElements(GL_TRIANGLES, m.num_vertices,
                             GL_UNSIGNED_SHORT,
