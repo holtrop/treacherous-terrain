@@ -215,8 +215,6 @@ void Client::draw_map()
 {
     const int width = m_map.get_width();
     const int height = m_map.get_height();
-    const float tile_size = 50;
-    glUniform1f(OBJ_SCALE, tile_size);
     m_projection.to_uniform(OBJ_PROJECTION);
     m_tile_obj.bindBuffers();
     glEnableVertexAttribArray(0);
@@ -232,11 +230,13 @@ void Client::draw_map()
         {
             if (m_map.tile_present(x, y))
             {
+                refptr<HexTile> tile = m_map.get_tile(x, y);
+                float cx = tile->get_x();
+                float cy = tile->get_y();
                 m_modelview.push();
-                float cx = m_map.get_tile(x, y)->get_x();
-                float cy = m_map.get_tile(x, y)->get_y();
                 m_modelview.translate(cx, cy, 0);
                 m_modelview.to_uniform(OBJ_MODELVIEW);
+                glUniform1f(OBJ_SCALE, tile->get_size());
                 for (map<string, WFObj::Material>::iterator it =
                         m_tile_obj.getMaterials().begin();
                         it != m_tile_obj.getMaterials().end();
