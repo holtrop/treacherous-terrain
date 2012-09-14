@@ -160,6 +160,7 @@ void Client::redraw()
 
     draw_players();
     draw_map();
+    draw_overlay();
 
     m_window->display();
 }
@@ -267,4 +268,15 @@ void Client::draw_map()
             }
         }
     }
+}
+
+void Client::draw_overlay()
+{
+    int overlay_size = (int)(m_width * 0.15);
+    glViewport(m_width - overlay_size - 50, m_height - overlay_size - 50,
+            overlay_size, overlay_size);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_BLEND);
+    glViewport(0, 0, m_width, m_height);
 }

@@ -24,6 +24,7 @@ class Client
         void redraw();
         void draw_players();
         void draw_map();
+        void draw_overlay();
 
         refptr<sf::Window> m_window;
         sf::Clock m_clock;
