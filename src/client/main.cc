@@ -6,37 +6,37 @@
 int main(int argc, char *argv[])
 {
     bool fullscreen = false;
-    unsigned int antialias_level = 0u;
-    bool compatibility_context = false;
+    int width = 800;
+    int height = 600;
 
     struct option longopts[] = {
-        {"antialias-level", required_argument, NULL, 'a'},
-        {"compatibility", no_argument, NULL, 'c'},
         {"fullscreen", no_argument, NULL, 'f'},
+        {"height", required_argument, NULL, 'h'},
+        {"width", required_argument, NULL, 'w'},
         {NULL, 0, NULL, 0}
     };
     for (;;)
     {
-        int c = getopt_long(argc, argv, "a:cf", longopts, NULL);
+        int c = getopt_long(argc, argv, "fh:w:", longopts, NULL);
         if (c == -1)
             break;
         switch (c)
         {
-            case 'a':
-                antialias_level = atoi(optarg);
-                break;
-            case 'c':
-                compatibility_context = true;
-                break;
             case 'f':
                 fullscreen = true;
+                break;
+            case 'h':
+                height = atoi(optarg);
+                break;
+            case 'w':
+                width = atoi(optarg);
                 break;
         }
     }
 
-    Client client(fullscreen, compatibility_context, antialias_level);
+    Client client;
 
-    client.run();
+    client.run(fullscreen, width, height);
 
     return 0;
 }

@@ -14,15 +14,17 @@
 class Client
 {
     public:
-        Client(bool fullscreen, bool compatibility_context,
-                unsigned int antialias_level);
-        void run();
+        Client();
+        void run(bool fullscreen, int width, int height);
     protected:
-        void initgl();
+        bool create_window(bool fullscreen, int width, int height);
+        bool initgl();
         void resize_window(int width, int height);
         void update(double elapsed_time);
+        void redraw();
         void draw_players();
         void draw_map();
+
         refptr<sf::Window> m_window;
         sf::Clock m_clock;
         Map m_map;
