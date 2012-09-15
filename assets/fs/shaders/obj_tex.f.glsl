@@ -17,7 +17,7 @@ void main(void)
     color = vec4(0.2, 0.2, 0.2, 1.0) * ambient;  /* ambient light */
     n = normalize(normal_i);
 
-    NdotL = max(dot(n, -lightDir), 0.0);
+    NdotL = dot(n, -lightDir);
 
     if (NdotL > 0.0)
     {
