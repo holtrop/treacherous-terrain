@@ -1,6 +1,6 @@
-
 #include <getopt.h>
 #include <stdlib.h>
+#include "Server.h"
 
 int main(int argc, char *argv[])
 {
@@ -24,12 +24,9 @@ int main(int argc, char *argv[])
         }
     }
 
-    /* TODO: make this work... */
-#if 0
     Server server(port);
 
     server.run();
-#endif
 
     return 0;
 }

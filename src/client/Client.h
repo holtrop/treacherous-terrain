@@ -10,11 +10,13 @@
 #include "WFObj.h"
 #include "GLMatrix.h"
 #include "GLBuffer.h"
+#include "Network.h"
 
 class Client
 {
     public:
         Client();
+        ~Client();
         void run(bool fullscreen, int width, int height);
     protected:
         bool create_window(bool fullscreen, int width, int height);
@@ -39,6 +41,8 @@ class Client
         GLMatrix m_modelview;
         GLBuffer m_overlay_hex_attributes;
         GLBuffer m_overlay_hex_indices;
+        refptr<Network> m_net_client;
+        bool client_has_focus;
 };
 
 #endif

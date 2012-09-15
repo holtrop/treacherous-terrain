@@ -1,10 +1,20 @@
 
 #include <math.h>
 #include "Client.h"
+#include "Types.h"
 
 Client::Client()
 {
+    m_net_client = new Network();
+    m_net_client->Create(59243, "127.0.0.1"); // Just connect to local host for now - testing
+    client_has_focus = true;
 }
+
+Client::~Client()
+{
+    m_net_client->Destroy();
+}
+
 
 void Client::run(bool fullscreen, int width, int height)
 {
@@ -22,6 +32,7 @@ void Client::run(bool fullscreen, int width, int height)
         double current_time = m_clock.getElapsedTime().asSeconds();
         double elapsed_time = current_time - last_time;
         sf::Event event;
+
         while (m_window->pollEvent(event))
         {
             switch (event.type)
@@ -42,6 +53,12 @@ void Client::run(bool fullscreen, int width, int height)
             case sf::Event::Resized:
                 resize_window(event.size.width, event.size.height);
                 break;
+            case sf::Event::LostFocus:
+                client_has_focus = false;
+                break;
+            case sf::Event::GainedFocus:
+                client_has_focus = true;
+                break;
             default:
                 break;
             }
@@ -50,37 +67,88 @@ void Client::run(bool fullscreen, int width, int height)
         update(elapsed_time);
         redraw();
         last_time = current_time;
+
+        // temporary for now.  otherwise this thread consumed way too processing
+        sf::sleep(sf::seconds(0.005)); // 5 milli-seconds
     }
 }
 
 void Client::update(double elapsed_time)
 {
-    const double move_speed = 75.0;
+    static sf::Uint8 w_pressed_prev = KEY_NOT_PRESSED;
+    static sf::Uint8 a_pressed_prev = KEY_NOT_PRESSED;
+    static sf::Uint8 s_pressed_prev = KEY_NOT_PRESSED;
+    static sf::Uint8 d_pressed_prev = KEY_NOT_PRESSED;
+    static sf::Int32 rel_mouse_movement_prev = 0;
+
+    sf::Packet client_packet;
+
+    m_net_client->Receive();
+    client_packet.clear();
+    if(m_net_client->getData(client_packet))
+    {
+        // Update player position as calculated from the server.
+        client_packet >> m_player->direction;
+        client_packet >> m_player->x;
+        client_packet >> m_player->y;
+    }
+
+    // For now, we are going to do a very crude shove data into
+    // packet from keyboard and mouse events.
+    // TODO:  Clean this up and make it more robust
+    client_packet.clear();
+
+    sf::Uint8 w_pressed = KEY_NOT_PRESSED;
+    sf::Uint8 a_pressed = KEY_NOT_PRESSED;
+    sf::Uint8 s_pressed = KEY_NOT_PRESSED;
+    sf::Uint8 d_pressed = KEY_NOT_PRESSED;
+    sf::Int32 rel_mouse_movement = 0;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
     {
-        double direction = m_player->direction + M_PI_2;
-        m_player->x += cos(direction) * move_speed * elapsed_time;
-        m_player->y += sin(direction) * move_speed * elapsed_time;
+        a_pressed = KEY_PRESSED;
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
     {
-        double direction = m_player->direction - M_PI_2;
-        m_player->x += cos(direction) * move_speed * elapsed_time;
-        m_player->y += sin(direction) * move_speed * elapsed_time;
+        d_pressed = KEY_PRESSED;
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
     {
-        double direction = m_player->direction;
-        m_player->x += cos(direction) * move_speed * elapsed_time;
-        m_player->y += sin(direction) * move_speed * elapsed_time;
+        w_pressed = KEY_PRESSED;
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
     {
-        double direction = m_player->direction + M_PI;
-        m_player->x += cos(direction) * move_speed * elapsed_time;
-        m_player->y += sin(direction) * move_speed * elapsed_time;
+        s_pressed = KEY_PRESSED;
     }
-    int xrel = sf::Mouse::getPosition(*m_window).x - m_width / 2;
-    sf::Mouse::setPosition(sf::Vector2i(m_width / 2, m_height / 2), *m_window);
-    m_player->direction -= M_PI * 0.5 * xrel / 1000;
+    rel_mouse_movement = sf::Mouse::getPosition(*m_window).x - m_width / 2;
+
+    // This is a fix so that the mouse will not move outside the window and
+    // cause the user to click on another program.
+    // Note:  Does not work well with fast movement.
+    if(client_has_focus)
+    {
+        sf::Mouse::setPosition(sf::Vector2i(m_width / 2, m_height / 2), *m_window);
+    }
+
+    // Send an update to the server if something has changed
+    if((w_pressed_prev != w_pressed) ||
+       (a_pressed_prev != a_pressed) ||
+       (s_pressed_prev != s_pressed) ||
+       (d_pressed_prev != d_pressed) ||
+       (rel_mouse_movement_prev !=  rel_mouse_movement))
+    {
+        client_packet << w_pressed;
+        client_packet << a_pressed;
+        client_packet << s_pressed;
+        client_packet << d_pressed;
+        client_packet << rel_mouse_movement;
+
+        m_net_client->sendData(client_packet);
+
+        w_pressed_prev = w_pressed;
+        a_pressed_prev = a_pressed;
+        s_pressed_prev = s_pressed;
+        d_pressed_prev = d_pressed;
+        rel_mouse_movement_prev =  rel_mouse_movement;
+    }
+    m_net_client->Transmit();
 }

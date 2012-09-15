@@ -36,7 +36,7 @@ SFML_VERSION = '2.0-rc'
 BIN_DIR = 'bin'
 CXX = 'g++'
 CC = 'gcc'
-CXXFLAGS = ['-Wall', '-O2', '-g']
+CXXFLAGS = ['-Wall', '-O0', '-g']
 LINKFLAGS = []
 LIBS_client = []
 LIBS_server = []
@@ -48,8 +48,8 @@ if 'SFML_PATH' in os.environ:
 LIBPATH = ['%s/lib' % SFML_PATH]
 CPPFLAGS = []
 CPPFLAGS += map(lambda x: '-I' + x, find_dirs_under('src/common'))
-CPPFLAGS_client = ['-I%s/include' % SFML_PATH,
-    '-DGL_INCLUDE_FILE=\\"GL3/gl3w.h\\"']
+CPPFLAGS += ['-I%s/include' % SFML_PATH]
+CPPFLAGS_client = ['-DGL_INCLUDE_FILE=\\"GL3/gl3w.h\\"']
 CPPFLAGS_client += map(lambda x: '-I' + x, find_dirs_under('src/client'))
 CPPFLAGS_server = map(lambda x: '-I' + x, find_dirs_under('src/server'))
 
@@ -67,7 +67,7 @@ if platform == 'windows':
 else:
     LIBS_client += ['sfml-network', 'sfml-window', 'sfml-graphics',
             'sfml-system', 'GL', 'GLU']
-    LIBS_server += ['sfml-network']
+    LIBS_server += ['sfml-system','sfml-network']
     LINKFLAGS.append('-Wl,-R%s/lib' % SFML_PATH)
 
 # our sources
