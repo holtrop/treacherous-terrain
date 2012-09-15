@@ -95,8 +95,8 @@ bool Client::initgl()
         {1, "normal"},
         {0, NULL}
     };
-    const char *v_source = (const char *) CFS.get_file("shaders/obj_v.glsl", NULL);
-    const char *f_source = (const char *) CFS.get_file("shaders/obj_f.glsl", NULL);
+    const char *v_source = (const char *) CFS.get_file("shaders/obj.v.glsl", NULL);
+    const char *f_source = (const char *) CFS.get_file("shaders/obj.f.glsl", NULL);
     if (v_source == NULL || f_source == NULL)
     {
         cerr << "Error loading shader sources" << endl;
