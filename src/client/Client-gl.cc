@@ -16,17 +16,17 @@ using namespace std;
 #define OPENGL_CONTEXT_MINOR 0
 
 /* points of a horizontal hexagon 1.0 units high */
-static const float overlay_hex_attributes[][2] = {
+static const float overlay_hex_attributes[][3] = {
     {0.0, 0.0},
-    {HEX_WIDTH_TO_HEIGHT / 2.0, 0.0},
-    {HEX_WIDTH_TO_HEIGHT / 4.0, 0.5},
-    {-HEX_WIDTH_TO_HEIGHT / 4.0, 0.5},
-    {-HEX_WIDTH_TO_HEIGHT / 2.0, 0.0},
-    {-HEX_WIDTH_TO_HEIGHT / 4.0, -0.5},
-    {HEX_WIDTH_TO_HEIGHT / 4.0, -0.5}
+    {HEX_WIDTH_TO_HEIGHT / 2.0, 0.0, 0.0},
+    {HEX_WIDTH_TO_HEIGHT / 4.0, 0.5, 0.0},
+    {-HEX_WIDTH_TO_HEIGHT / 4.0, 0.5, 0.0},
+    {-HEX_WIDTH_TO_HEIGHT / 2.0, 0.0, 0.0},
+    {-HEX_WIDTH_TO_HEIGHT / 4.0, -0.5, 0.0},
+    {HEX_WIDTH_TO_HEIGHT / 4.0, -0.5, 0.0}
 };
 static const GLushort overlay_hex_indices[] = {
-    0, 1, 2, 3, 4, 5, 6
+    0, 1, 2, 3, 4, 5, 6, 1
 };
 
 static bool load_file(const char *fname, WFObj::Buffer & buff)
@@ -285,11 +285,11 @@ void Client::draw_overlay()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     m_overlay_program.use();
     GLMatrix proj;
-    const float span = 50 * 10;
+    const float span = 50 * 8;
     proj.ortho(-span, span, -span, span, -1, 1);
     proj.to_uniform(m_overlay_program.uniform("projection"));
     GLMatrix modelview;
-    GLfloat hex_color[] = {0.2, 0.2, 0.8, 0.5};
+    GLfloat hex_color[] = {0.2, 0.2, 0.8, 0.4};
     glUniform4fv(m_overlay_program.uniform("color"), 1, hex_color);
     m_overlay_hex_attributes.bind();
     m_overlay_hex_indices.bind();
