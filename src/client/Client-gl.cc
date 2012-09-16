@@ -289,6 +289,8 @@ void Client::draw_overlay()
     proj.ortho(-span, span, -span, span, -1, 1);
     proj.to_uniform(m_overlay_program.uniform("projection"));
     GLMatrix modelview;
+    modelview.rotate(90 - m_player->direction * 180 / M_PI, 0, 0, 1);
+    modelview.translate(-m_player->x, -m_player->y, 0);
     GLfloat hex_color[] = {0.2, 0.8, 0.8, 0.3};
     GLfloat border_color[] = {0.4, 0.9, 0.9, 1.0};
     m_overlay_hex_attributes.bind();
