@@ -291,8 +291,6 @@ void Client::draw_overlay()
     GLMatrix modelview;
     modelview.rotate(90 - m_player->direction * 180 / M_PI, 0, 0, 1);
     modelview.translate(-m_player->x, -m_player->y, 0);
-    GLfloat hex_color[] = {0.2, 0.8, 0.8, 0.3};
-    GLfloat border_color[] = {0.4, 0.9, 0.9, 1.0};
     m_overlay_hex_attributes.bind();
     m_overlay_hex_indices.bind();
     glEnableVertexAttribArray(0);
@@ -313,10 +311,12 @@ void Client::draw_overlay()
                 modelview.translate(cx, cy, 0);
                 modelview.scale(tile->get_size(), tile->get_size(), tile->get_size());
                 modelview.to_uniform(m_overlay_program.uniform("modelview"));
-                glUniform4fv(m_overlay_program.uniform("color"), 1, hex_color);
+                glUniform4f(m_overlay_program.uniform("color"),
+                        0.2, 0.8, 0.8, 0.3);
                 glDrawElements(GL_TRIANGLE_FAN, LEN(overlay_hex_indices),
                         GL_UNSIGNED_SHORT, NULL);
-                glUniform4fv(m_overlay_program.uniform("color"), 1, border_color);
+                glUniform4f(m_overlay_program.uniform("color"),
+                        0.4, 0.9, 0.9, 1.0);
                 glDrawElements(GL_LINE_LOOP, LEN(overlay_hex_indices) - 2,
                         GL_UNSIGNED_SHORT, (GLvoid *)(sizeof(GLushort)));
                 modelview.pop();
@@ -324,6 +324,14 @@ void Client::draw_overlay()
         }
     }
     glDisableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    GLMatrix::Identity.to_uniform(m_overlay_program.uniform("modelview"));
+    glVertexAttrib3f(0, 0, 0, 0);
+    glUniform4f(m_overlay_program.uniform("color"), 1, 0, 0, 1);
+    glPointSize(3);
+    glDrawArrays(GL_POINTS, 0, 1);
+
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
     glViewport(0, 0, m_width, m_height);
