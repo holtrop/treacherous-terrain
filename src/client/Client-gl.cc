@@ -289,8 +289,8 @@ void Client::draw_overlay()
     proj.ortho(-span, span, -span, span, -1, 1);
     proj.to_uniform(m_overlay_program.uniform("projection"));
     GLMatrix modelview;
-    GLfloat hex_color[] = {0.2, 0.2, 0.8, 0.4};
-    glUniform4fv(m_overlay_program.uniform("color"), 1, hex_color);
+    GLfloat hex_color[] = {0.2, 0.8, 0.8, 0.3};
+    GLfloat border_color[] = {0.4, 0.9, 0.9, 1.0};
     m_overlay_hex_attributes.bind();
     m_overlay_hex_indices.bind();
     glEnableVertexAttribArray(0);
@@ -311,8 +311,12 @@ void Client::draw_overlay()
                 modelview.translate(cx, cy, 0);
                 modelview.scale(tile->get_size(), tile->get_size(), tile->get_size());
                 modelview.to_uniform(m_overlay_program.uniform("modelview"));
+                glUniform4fv(m_overlay_program.uniform("color"), 1, hex_color);
                 glDrawElements(GL_TRIANGLE_FAN, LEN(overlay_hex_indices),
                         GL_UNSIGNED_SHORT, NULL);
+                glUniform4fv(m_overlay_program.uniform("color"), 1, border_color);
+                glDrawElements(GL_LINE_LOOP, LEN(overlay_hex_indices) - 2,
+                        GL_UNSIGNED_SHORT, (GLvoid *)(sizeof(GLushort)));
                 modelview.pop();
             }
         }
