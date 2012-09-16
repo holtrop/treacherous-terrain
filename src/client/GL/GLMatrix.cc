@@ -192,7 +192,7 @@ void GLMatrix::ortho(GLfloat left, GLfloat right,
     multiply(mult);
 }
 
-void GLMatrix::to_uniform(GLint uniform)
+void GLMatrix::to_uniform(GLint uniform) const
 {
     glUniformMatrix4fv(uniform, 1, GL_FALSE, &m_mat[0][0]);
 }

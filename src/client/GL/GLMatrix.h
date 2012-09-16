@@ -31,7 +31,7 @@ class GLMatrix
         void ortho(GLfloat left, GLfloat right,
                 GLfloat bottom, GLfloat top,
                 GLfloat z_near, GLfloat z_far);
-        void to_uniform(GLint uniform);
+        void to_uniform(GLint uniform) const;
 
         void push();
         void pop();
