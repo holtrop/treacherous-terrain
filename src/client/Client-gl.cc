@@ -11,27 +11,10 @@
 
 using namespace std;
 
+#define LEN(arr) (sizeof(arr)/sizeof(arr[0]))
 #define OPENGL_CONTEXT_MAJOR 3
 #define OPENGL_CONTEXT_MINOR 0
-#define NUM_OBJ_UNIFORMS 7
 
-static GLint obj_uniform_locations[NUM_OBJ_UNIFORMS];
-static const char *obj_uniform_names[] = {
-#define OBJ_AMBIENT obj_uniform_locations[0]
-    "ambient",
-#define OBJ_DIFFUSE obj_uniform_locations[1]
-    "diffuse",
-#define OBJ_SPECULAR obj_uniform_locations[2]
-    "specular",
-#define OBJ_SHININESS obj_uniform_locations[3]
-    "shininess",
-#define OBJ_SCALE obj_uniform_locations[4]
-    "scale",
-#define OBJ_PROJECTION obj_uniform_locations[5]
-    "projection",
-#define OBJ_MODELVIEW obj_uniform_locations[6]
-    "modelview"
-};
 /* points of a horizontal hexagon 1.0 units high */
 static const float overlay_hex_attributes[][2] = {
     {0.0, 0.0},
@@ -92,8 +75,16 @@ bool Client::initgl()
     glEnable(GL_DEPTH_TEST);
     GLProgram::AttributeBinding obj_attrib_bindings[] = {
         {0, "pos"},
-        {1, "normal"},
-        {0, NULL}
+        {1, "normal"}
+    };
+    const char *obj_uniforms[] = {
+        "ambient",
+        "diffuse",
+        "specular",
+        "shininess",
+        "scale",
+        "projection",
+        "modelview"
     };
     const char *v_source = (const char *) CFS.get_file("shaders/obj.v.glsl", NULL);
     const char *f_source = (const char *) CFS.get_file("shaders/obj.f.glsl", NULL);
@@ -102,7 +93,9 @@ bool Client::initgl()
         cerr << "Error loading shader sources" << endl;
         return false;
     }
-    else if (!m_obj_program.create(v_source, f_source, obj_attrib_bindings))
+    else if (!m_obj_program.create(v_source, f_source,
+                obj_attrib_bindings, LEN(obj_attrib_bindings),
+                obj_uniforms, LEN(obj_uniforms)))
     {
         cerr << "Error creating obj program" << endl;
         return false;
@@ -129,8 +122,6 @@ bool Client::initgl()
         cerr << "Error creating overlay hex indices buffer" << endl;
         return false;
     }
-    m_obj_program.get_uniform_locations(obj_uniform_names, NUM_OBJ_UNIFORMS,
-            obj_uniform_locations);
     m_obj_program.use();
     return true;
 }
@@ -178,9 +169,9 @@ void Client::draw_players()
             stride, (GLvoid *) m_tank_obj.getVertexOffset());
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
             stride, (GLvoid *) m_tank_obj.getNormalOffset());
-    glUniform1f(OBJ_SCALE, 2.0f);
-    m_projection.to_uniform(OBJ_PROJECTION);
-    m_modelview.to_uniform(OBJ_MODELVIEW);
+    glUniform1f(m_obj_program.uniform("scale"), 2.0f);
+    m_projection.to_uniform(m_obj_program.uniform("projection"));
+    m_modelview.to_uniform(m_obj_program.uniform("modelview"));
     for (map<string, WFObj::Material>::iterator it =
             m_tank_obj.getMaterials().begin();
             it != m_tank_obj.getMaterials().end();
@@ -189,19 +180,19 @@ void Client::draw_players()
         WFObj::Material & m = it->second;
         if (m.flags & WFObj::Material::SHININESS_BIT)
         {
-            glUniform1f(OBJ_SHININESS, m.shininess);
+            glUniform1f(m_obj_program.uniform("shininess"), m.shininess);
         }
         if (m.flags & WFObj::Material::AMBIENT_BIT)
         {
-            glUniform4fv(OBJ_AMBIENT, 1, &m.ambient[0]);
+            glUniform4fv(m_obj_program.uniform("ambient"), 1, &m.ambient[0]);
         }
         if (m.flags & WFObj::Material::DIFFUSE_BIT)
         {
-            glUniform4fv(OBJ_DIFFUSE, 1, &m.diffuse[0]);
+            glUniform4fv(m_obj_program.uniform("diffuse"), 1, &m.diffuse[0]);
         }
         if (m.flags & WFObj::Material::SPECULAR_BIT)
         {
-            glUniform4fv(OBJ_SPECULAR, 1, &m.specular[0]);
+            glUniform4fv(m_obj_program.uniform("specular"), 1, &m.specular[0]);
         }
         glDrawElements(GL_TRIANGLES, m.num_vertices,
                 GL_UNSIGNED_SHORT,
@@ -216,7 +207,7 @@ void Client::draw_map()
 {
     const int width = m_map.get_width();
     const int height = m_map.get_height();
-    m_projection.to_uniform(OBJ_PROJECTION);
+    m_projection.to_uniform(m_obj_program.uniform("projection"));
     m_tile_obj.bindBuffers();
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
@@ -236,8 +227,8 @@ void Client::draw_map()
                 float cy = tile->get_y();
                 m_modelview.push();
                 m_modelview.translate(cx, cy, 0);
-                m_modelview.to_uniform(OBJ_MODELVIEW);
-                glUniform1f(OBJ_SCALE, tile->get_size());
+                m_modelview.to_uniform(m_obj_program.uniform("modelview"));
+                glUniform1f(m_obj_program.uniform("scale"), tile->get_size());
                 for (map<string, WFObj::Material>::iterator it =
                         m_tile_obj.getMaterials().begin();
                         it != m_tile_obj.getMaterials().end();
@@ -246,19 +237,19 @@ void Client::draw_map()
                     WFObj::Material & m = it->second;
                     if (m.flags & WFObj::Material::SHININESS_BIT)
                     {
-                        glUniform1f(OBJ_SHININESS, m.shininess);
+                        glUniform1f(m_obj_program.uniform("shininess"), m.shininess);
                     }
                     if (m.flags & WFObj::Material::AMBIENT_BIT)
                     {
-                        glUniform4fv(OBJ_AMBIENT, 1, &m.ambient[0]);
+                        glUniform4fv(m_obj_program.uniform("ambient"), 1, &m.ambient[0]);
                     }
                     if (m.flags & WFObj::Material::DIFFUSE_BIT)
                     {
-                        glUniform4fv(OBJ_DIFFUSE, 1, &m.diffuse[0]);
+                        glUniform4fv(m_obj_program.uniform("diffuse"), 1, &m.diffuse[0]);
                     }
                     if (m.flags & WFObj::Material::SPECULAR_BIT)
                     {
-                        glUniform4fv(OBJ_SPECULAR, 1, &m.specular[0]);
+                        glUniform4fv(m_obj_program.uniform("specular"), 1, &m.specular[0]);
                     }
                     glDrawElements(GL_TRIANGLES, m.num_vertices,
                             GL_UNSIGNED_SHORT,

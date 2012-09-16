@@ -7,6 +7,7 @@ using namespace std;
 GLProgram::GLProgram()
 {
     m_id = 0;
+    m_uniform_locations = NULL;
 }
 
 GLProgram::~GLProgram()
@@ -15,10 +16,15 @@ GLProgram::~GLProgram()
     {
         glDeleteProgram(m_id);
     }
+    if (m_uniform_locations != NULL)
+    {
+        delete[] m_uniform_locations;
+    }
 }
 
 bool GLProgram::create(const char *v_source, const char *f_source,
-                GLProgram::AttributeBinding *bindings)
+                GLProgram::AttributeBinding *bindings, int n_bindings,
+                const char **uniforms, int n_uniforms)
 {
     if (!m_v_shader.create(GL_VERTEX_SHADER, v_source))
         return false;
@@ -30,12 +36,9 @@ bool GLProgram::create(const char *v_source, const char *f_source,
     glAttachShader(m_id, m_v_shader.get_id());
     glAttachShader(m_id, m_f_shader.get_id());
 
-    if (bindings != NULL)
+    for (int i = 0; i < n_bindings; i++)
     {
-        for (int i = 0; bindings[i].name != NULL; i++)
-        {
-            glBindAttribLocation(m_id, bindings[i].index, bindings[i].name);
-        }
+        glBindAttribLocation(m_id, bindings[i].index, bindings[i].name);
     }
 
     glLinkProgram(m_id);
@@ -56,18 +59,15 @@ bool GLProgram::create(const char *v_source, const char *f_source,
         return false;
     }
 
-    return true;
-}
-
-GLint GLProgram::get_uniform_location(const char *name)
-{
-    return glGetUniformLocation(m_id, name);
-}
-
-void GLProgram::get_uniform_locations(const char **names, int num, GLint *locs)
-{
-    for (int i = 0; i < num; i++)
+    if (n_uniforms > 0)
     {
-        locs[i] = get_uniform_location(names[i]);
+        m_uniform_locations = new GLint[n_uniforms];
+        for (int i = 0; i < n_uniforms; i++)
+        {
+            m_uniform_locations[i] = glGetUniformLocation(m_id, uniforms[i]);
+            m_uniform_location_names[uniforms[i]] = m_uniform_locations[i];
+        }
     }
+
+    return true;
 }
