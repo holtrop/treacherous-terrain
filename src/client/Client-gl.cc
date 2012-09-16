@@ -25,7 +25,7 @@ static const float overlay_hex_attributes[][2] = {
     {-HEX_WIDTH_TO_HEIGHT / 4.0, -0.5},
     {HEX_WIDTH_TO_HEIGHT / 4.0, -0.5}
 };
-static const GLshort overlay_hex_indices[] = {
+static const GLushort overlay_hex_indices[] = {
     0, 1, 2, 3, 4, 5, 6
 };
 
@@ -85,18 +85,31 @@ bool Client::initgl()
         "projection",
         "modelview"
     };
-    const char *v_source = (const char *) CFS.get_file("shaders/obj.v.glsl", NULL);
-    const char *f_source = (const char *) CFS.get_file("shaders/obj.f.glsl", NULL);
-    if (v_source == NULL || f_source == NULL)
+    const char *overlay_uniforms[] = {
+        "projection",
+        "modelview",
+        "color"
+    };
+    const char *obj_v_source = (const char *) CFS.get_file("shaders/obj.v.glsl", NULL);
+    const char *obj_f_source = (const char *) CFS.get_file("shaders/obj.f.glsl", NULL);
+    const char *overlay_f_source = (const char *) CFS.get_file("shaders/overlay.f.glsl", NULL);
+    if (obj_v_source == NULL || obj_f_source == NULL)
     {
         cerr << "Error loading shader sources" << endl;
         return false;
     }
-    else if (!m_obj_program.create(v_source, f_source,
+    if (!m_obj_program.create(obj_v_source, obj_f_source,
                 obj_attrib_bindings, LEN(obj_attrib_bindings),
                 obj_uniforms, LEN(obj_uniforms)))
     {
         cerr << "Error creating obj program" << endl;
+        return false;
+    }
+    if (!m_overlay_program.create(obj_v_source, overlay_f_source,
+                obj_attrib_bindings, LEN(obj_attrib_bindings),
+                overlay_uniforms, LEN(overlay_uniforms)))
+    {
+        cerr << "Error creating overlay program" << endl;
         return false;
     }
     if (!m_tank_obj.load("models/tank.obj", load_file))
@@ -157,6 +170,7 @@ void Client::redraw()
 
 void Client::draw_players()
 {
+    m_obj_program.use();
     m_modelview.push();
     m_modelview.translate(m_player->x, m_player->y, 4);
     m_modelview.rotate(m_player->direction * 180.0 / M_PI, 0, 0, 1);
@@ -204,8 +218,7 @@ void Client::draw_players()
 
 void Client::draw_map()
 {
-    const int width = m_map.get_width();
-    const int height = m_map.get_height();
+    m_obj_program.use();
     m_projection.to_uniform(m_obj_program.uniform("projection"));
     m_tile_obj.bindBuffers();
     glEnableVertexAttribArray(0);
@@ -215,6 +228,8 @@ void Client::draw_map()
             stride, (GLvoid *) m_tile_obj.getVertexOffset());
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
             stride, (GLvoid *) m_tile_obj.getNormalOffset());
+    const int width = m_map.get_width();
+    const int height = m_map.get_height();
     for (int y = 0; y < height; y++)
     {
         for (int x = 0; x < width; x++)
@@ -266,7 +281,44 @@ void Client::draw_overlay()
     glViewport(m_width - overlay_size - 50, m_height - overlay_size - 50,
             overlay_size, overlay_size);
     glEnable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    m_overlay_program.use();
+    GLMatrix proj;
+    const float span = 50 * 10;
+    proj.ortho(-span, span, -span, span, -1, 1);
+    proj.to_uniform(m_overlay_program.uniform("projection"));
+    GLMatrix modelview;
+    GLfloat hex_color[] = {0.2, 0.2, 0.8, 0.5};
+    glUniform4fv(m_overlay_program.uniform("color"), 1, hex_color);
+    m_overlay_hex_attributes.bind();
+    m_overlay_hex_indices.bind();
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
+            sizeof(overlay_hex_attributes[0]), NULL);
+    const int width = m_map.get_width();
+    const int height = m_map.get_height();
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            if (m_map.tile_present(x, y))
+            {
+                refptr<HexTile> tile = m_map.get_tile(x, y);
+                float cx = tile->get_x();
+                float cy = tile->get_y();
+                modelview.push();
+                modelview.translate(cx, cy, 0);
+                modelview.scale(tile->get_size(), tile->get_size(), tile->get_size());
+                modelview.to_uniform(m_overlay_program.uniform("modelview"));
+                glDrawElements(GL_TRIANGLE_FAN, LEN(overlay_hex_indices),
+                        GL_UNSIGNED_SHORT, NULL);
+                modelview.pop();
+            }
+        }
+    }
+    glDisableVertexAttribArray(0);
+    glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
     glViewport(0, 0, m_width, m_height);
 }

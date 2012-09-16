@@ -35,6 +35,7 @@ class Client
         int m_width;
         int m_height;
         GLProgram m_obj_program;
+        GLProgram m_overlay_program;
         WFObj m_tank_obj;
         WFObj m_tile_obj;
         GLMatrix m_projection;
