@@ -82,7 +82,6 @@ bool Client::initgl()
         "diffuse",
         "specular",
         "shininess",
-        "scale",
         "projection",
         "modelview"
     };
@@ -161,6 +160,7 @@ void Client::draw_players()
     m_modelview.push();
     m_modelview.translate(m_player->x, m_player->y, 4);
     m_modelview.rotate(m_player->direction * 180.0 / M_PI, 0, 0, 1);
+    m_modelview.scale(2, 2, 2);
     m_tank_obj.bindBuffers();
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
@@ -169,7 +169,6 @@ void Client::draw_players()
             stride, (GLvoid *) m_tank_obj.getVertexOffset());
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
             stride, (GLvoid *) m_tank_obj.getNormalOffset());
-    glUniform1f(m_obj_program.uniform("scale"), 2.0f);
     m_projection.to_uniform(m_obj_program.uniform("projection"));
     m_modelview.to_uniform(m_obj_program.uniform("modelview"));
     for (map<string, WFObj::Material>::iterator it =
@@ -227,8 +226,8 @@ void Client::draw_map()
                 float cy = tile->get_y();
                 m_modelview.push();
                 m_modelview.translate(cx, cy, 0);
+                m_modelview.scale(tile->get_size(), tile->get_size(), tile->get_size());
                 m_modelview.to_uniform(m_obj_program.uniform("modelview"));
-                glUniform1f(m_obj_program.uniform("scale"), tile->get_size());
                 for (map<string, WFObj::Material>::iterator it =
                         m_tile_obj.getMaterials().begin();
                         it != m_tile_obj.getMaterials().end();
