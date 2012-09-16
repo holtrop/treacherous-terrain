@@ -6,8 +6,8 @@
 int main(int argc, char *argv[])
 {
     bool fullscreen = false;
-    int width = 800;
-    int height = 600;
+    int width = 1200;
+    int height = 900;
 
     struct option longopts[] = {
         {"fullscreen", no_argument, NULL, 'f'},
