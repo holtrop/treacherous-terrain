@@ -58,9 +58,9 @@ if platform == 'windows':
     CXX = 'i686-pc-mingw32-g++'
     CC = 'i686-pc-mingw32-gcc'
     MINGW_DIR = '/usr/i686-pc-mingw32/sys-root/mingw/bin'
-    LIBS_client += ['sfml-graphics-s', 'sfml-window-s', 'sfml-system-s',
-            'sfml-network-s', 'opengl32', 'glu32', 'mingw32']
-    LIBS_server += ['sfml-network-s', 'mingw32']
+    LIBS_client += ['sfml-graphics-s', 'sfml-window-s', 'sfml-network-s',
+            'sfml-system-s', 'opengl32', 'glu32', 'mingw32']
+    LIBS_server += ['sfml-network-s', 'sfml-system-s', 'mingw32']
     LINKFLAGS.append('-static-libstdc++')
     libs_to_copy.append('%s/libgcc_s_dw2-1.dll' % MINGW_DIR)
     CPPFLAGS.append('-DSFML_STATIC')
