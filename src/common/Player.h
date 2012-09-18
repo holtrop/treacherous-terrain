@@ -11,6 +11,7 @@ class Player
         double x;
         double y;
         double direction; /* 0 = East, M_PI_2 = North, M_PI = West, ... */
+        double hover;
 
         Player();
 };
