@@ -15,6 +15,8 @@ using namespace std;
 #define OPENGL_CONTEXT_MAJOR 3
 #define OPENGL_CONTEXT_MINOR 0
 
+#define NUM_SKY_STEPS 9
+
 /* points of a horizontal hexagon 1.0 units high */
 static const float overlay_hex_attributes[][3] = {
     {0.0, 0.0},
@@ -77,6 +79,10 @@ bool Client::initgl()
         {0, "pos"},
         {1, "normal"}
     };
+    GLProgram::AttributeBinding sky_attrib_bindings[] = {
+        {0, "pos"},
+        {1, "color"}
+    };
     const char *obj_uniforms[] = {
         "ambient",
         "diffuse",
@@ -90,10 +96,18 @@ bool Client::initgl()
         "modelview",
         "color"
     };
+    const char *sky_uniforms[] = {
+        "projection",
+        "modelview"
+    };
     const char *obj_v_source = (const char *) CFS.get_file("shaders/obj.v.glsl", NULL);
     const char *obj_f_source = (const char *) CFS.get_file("shaders/obj.f.glsl", NULL);
     const char *overlay_f_source = (const char *) CFS.get_file("shaders/overlay.f.glsl", NULL);
-    if (obj_v_source == NULL || obj_f_source == NULL)
+    const char *sky_v_source = (const char *) CFS.get_file("shaders/sky.v.glsl", NULL);
+    const char *sky_f_source = (const char *) CFS.get_file("shaders/sky.f.glsl", NULL);
+    if (obj_v_source == NULL || obj_f_source == NULL ||
+            overlay_f_source == NULL ||
+            sky_v_source == NULL || sky_f_source == NULL)
     {
         cerr << "Error loading shader sources" << endl;
         return false;
@@ -110,6 +124,13 @@ bool Client::initgl()
                 overlay_uniforms, LEN(overlay_uniforms)))
     {
         cerr << "Error creating overlay program" << endl;
+        return false;
+    }
+    if (!m_sky_program.create(sky_v_source, sky_f_source,
+                sky_attrib_bindings, LEN(sky_attrib_bindings),
+                sky_uniforms, LEN(sky_uniforms)))
+    {
+        cerr << "Error creating sky program" << endl;
         return false;
     }
     if (!m_tank_obj.load("models/tank.obj", load_file))
@@ -132,6 +153,33 @@ bool Client::initgl()
                 overlay_hex_indices, sizeof(overlay_hex_indices)))
     {
         cerr << "Error creating overlay hex indices buffer" << endl;
+        return false;
+    }
+    const double sky_dist = 4500;
+    vector<GLfloat> sky_attributes((NUM_SKY_STEPS + 1) * 2 * (3 * 3));
+    for (int i = 0, idx = 0; i <= NUM_SKY_STEPS; i++)
+    {
+        GLfloat x = sky_dist * sin(M_PI_4 + i * M_PI_2 / NUM_SKY_STEPS);
+        GLfloat y = sky_dist * cos(M_PI - M_PI_4 - i * M_PI_2 / NUM_SKY_STEPS);
+        sky_attributes[idx++] = x;
+        sky_attributes[idx++] = y;
+        sky_attributes[idx++] = -10.0;
+        sky_attributes[idx++] = 0.6;
+        sky_attributes[idx++] = 0.6;
+        sky_attributes[idx++] = 1.0;
+
+        sky_attributes[idx++] = x;
+        sky_attributes[idx++] = y;
+        sky_attributes[idx++] = 1000.0;
+        sky_attributes[idx++] = 0.1;
+        sky_attributes[idx++] = 0.1;
+        sky_attributes[idx++] = 1.0;
+    }
+    if (!m_sky_attributes.create(GL_ARRAY_BUFFER, GL_STATIC_DRAW,
+                &sky_attributes[0],
+                sizeof(sky_attributes[0]) * sky_attributes.size()))
+    {
+        cerr << "Error creating sky attribute buffer" << endl;
         return false;
     }
     m_obj_program.use();
@@ -163,6 +211,8 @@ void Client::redraw()
 
     draw_players();
     draw_map();
+    draw_sky();
+
     draw_overlay();
 
     m_window->display();
@@ -335,4 +385,25 @@ void Client::draw_overlay()
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
     glViewport(0, 0, m_width, m_height);
+}
+
+void Client::draw_sky()
+{
+    m_sky_program.use();
+    m_sky_attributes.bind();
+    m_projection.to_uniform(m_sky_program.uniform("projection"));
+    m_modelview.push();
+    m_modelview.translate(m_player->x, m_player->y, 0);
+    m_modelview.rotate(m_player->direction * 180.0 / M_PI, 0, 0, 1);
+    m_modelview.to_uniform(m_sky_program.uniform("modelview"));
+    m_modelview.pop();
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
+            6 * sizeof(GLfloat), NULL);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
+            6 * sizeof(GLfloat), (GLvoid *) (3 * sizeof(GLfloat)));
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, (NUM_SKY_STEPS + 1) * 2);
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
 }

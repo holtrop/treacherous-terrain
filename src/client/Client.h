@@ -27,6 +27,7 @@ class Client
         void draw_players();
         void draw_map();
         void draw_overlay();
+        void draw_sky();
 
         refptr<sf::Window> m_window;
         sf::Clock m_clock;
@@ -36,12 +37,14 @@ class Client
         int m_height;
         GLProgram m_obj_program;
         GLProgram m_overlay_program;
+        GLProgram m_sky_program;
         WFObj m_tank_obj;
         WFObj m_tile_obj;
         GLMatrix m_projection;
         GLMatrix m_modelview;
         GLBuffer m_overlay_hex_attributes;
         GLBuffer m_overlay_hex_indices;
+        GLBuffer m_sky_attributes;
         refptr<Network> m_net_client;
         bool client_has_focus;
 };
