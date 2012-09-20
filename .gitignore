@@ -1,3 +1,4 @@
 bin
 src/client/ccfs.*
 *.blend?
+tags
