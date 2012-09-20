@@ -3,6 +3,7 @@
 #define CLIENT_H
 
 #include <SFML/Window.hpp>
+#include <SFML/Graphics/Texture.hpp>
 #include "refptr.h"
 #include "Map.h"
 #include "Player.h"
@@ -45,8 +46,10 @@ class Client
         GLBuffer m_overlay_hex_attributes;
         GLBuffer m_overlay_hex_indices;
         GLBuffer m_sky_attributes;
+        GLBuffer m_tex_quad_attributes;
         refptr<Network> m_net_client;
         bool client_has_focus;
+        sf::Texture m_lava_texture;
 };
 
 #endif

@@ -30,6 +30,16 @@ static const float overlay_hex_attributes[][3] = {
 static const GLushort overlay_hex_indices[] = {
     0, 1, 2, 3, 4, 5, 6, 1
 };
+static const struct
+{
+    float pos[3];
+    float tex_coord[2];
+} tex_quad_attributes[] = {
+    {{0.5, 0.5, 0.0}, {1.0, 1.0}},
+    {{-0.5, 0.5, 0.0}, {0.0, 1.0}},
+    {{-0.5, -0.5, 0.0}, {0.0, 0.0}},
+    {{0.5, -0.5, 0.0}, {1.0, 0.0}}
+};
 
 static bool load_file(const char *fname, WFObj::Buffer & buff)
 {
@@ -155,6 +165,12 @@ bool Client::initgl()
         cerr << "Error creating overlay hex indices buffer" << endl;
         return false;
     }
+    if (!m_tex_quad_attributes.create(GL_ARRAY_BUFFER, GL_STATIC_DRAW,
+                tex_quad_attributes, sizeof(tex_quad_attributes)))
+    {
+        cerr << "Error creating tex quad attribute buffer" << endl;
+        return false;
+    }
     const double sky_dist = 4500;
     vector<GLfloat> sky_attributes((NUM_SKY_STEPS + 1) * 2 * (3 * 3));
     for (int i = 0, idx = 0; i <= NUM_SKY_STEPS; i++)
@@ -180,6 +196,19 @@ bool Client::initgl()
                 sizeof(sky_attributes[0]) * sky_attributes.size()))
     {
         cerr << "Error creating sky attribute buffer" << endl;
+        return false;
+    }
+    unsigned int lava_texture_length;
+    const uint8_t *lava_texture = CFS.get_file("assets/textures/lava.jpg",
+            &lava_texture_length);
+    if (lava_texture == NULL)
+    {
+        cerr << "Error loading lava texture" << endl;
+        return false;
+    }
+    if (!m_lava_texture.loadFromMemory(lava_texture, lava_texture_length))
+    {
+        cerr << "Error creating lava texture" << endl;
         return false;
     }
     m_obj_program.use();
