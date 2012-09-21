@@ -199,7 +199,7 @@ bool Client::initgl()
         return false;
     }
     unsigned int lava_texture_length;
-    const uint8_t *lava_texture = CFS.get_file("assets/textures/lava.jpg",
+    const uint8_t *lava_texture = CFS.get_file("textures/lava.jpg",
             &lava_texture_length);
     if (lava_texture == NULL)
     {
