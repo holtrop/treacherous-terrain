@@ -32,7 +32,6 @@ def find_sources_under(path):
 platform = 'windows' if sys.platform == 'cygwin' else 'unix'
 
 # common environment settings
-SFML_VERSION = '2.0-rc'
 BIN_DIR = 'bin'
 CXX = 'g++'
 CC = 'gcc'
@@ -41,8 +40,7 @@ LINKFLAGS = []
 LIBS_client = []
 LIBS_server = []
 libs_to_copy = []
-SFML_PATH_PREFIX = '/c/apps' if platform == 'windows' else '/opt'
-SFML_PATH = '%s/SFML-%s' % (SFML_PATH_PREFIX, SFML_VERSION)
+SFML_PATH = '/c/apps/SFML' if platform == 'windows' else '/opt/SFML'
 if 'SFML_PATH' in os.environ:
     SFML_PATH = os.environ['SFML_PATH']
 LIBPATH = ['%s/lib' % SFML_PATH]
