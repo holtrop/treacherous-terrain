@@ -119,7 +119,8 @@ bool Client::initgl()
     const char *lava_uniforms[] = {
         "projection",
         "modelview",
-        "tex"
+        "tex",
+        "shift"
     };
     const char *obj_v_source =
         (const char *) CFS.get_file("shaders/obj.v.glsl", NULL);
@@ -473,7 +474,11 @@ void Client::draw_lava()
     glEnableVertexAttribArray(1);
     m_projection.to_uniform(m_lava_program.uniform("projection"));
     m_lava_texture.bind();
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glUniform1i(m_lava_program.uniform("tex"), 0);
+    double shift = m_clock.getElapsedTime().asSeconds() / 40;
+    glUniform1f(m_lava_program.uniform("shift"), shift);
     const int n_lavas = 2 * SKY_DIST / LAVA_SIZE;
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
             5 * sizeof(GLfloat), NULL);
