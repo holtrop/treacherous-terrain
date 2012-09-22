@@ -29,6 +29,7 @@ class Client
         void draw_map();
         void draw_overlay();
         void draw_sky();
+        void draw_lava();
 
         refptr<sf::Window> m_window;
         sf::Clock m_clock;
@@ -39,6 +40,7 @@ class Client
         GLProgram m_obj_program;
         GLProgram m_overlay_program;
         GLProgram m_sky_program;
+        GLProgram m_lava_program;
         WFObj m_tank_obj;
         WFObj m_tile_obj;
         GLMatrix m_projection;

@@ -15,7 +15,9 @@ using namespace std;
 #define OPENGL_CONTEXT_MAJOR 3
 #define OPENGL_CONTEXT_MINOR 0
 
+#define SKY_DIST 4500
 #define NUM_SKY_STEPS 9
+#define LAVA_SIZE 100
 
 /* points of a horizontal hexagon 1.0 units high */
 static const float overlay_hex_attributes[][3] = {
@@ -93,6 +95,10 @@ bool Client::initgl()
         {0, "pos"},
         {1, "color"}
     };
+    GLProgram::AttributeBinding lava_attrib_bindings[] = {
+        {0, "pos"},
+        {1, "tex_coord"}
+    };
     const char *obj_uniforms[] = {
         "ambient",
         "diffuse",
@@ -110,14 +116,29 @@ bool Client::initgl()
         "projection",
         "modelview"
     };
-    const char *obj_v_source = (const char *) CFS.get_file("shaders/obj.v.glsl", NULL);
-    const char *obj_f_source = (const char *) CFS.get_file("shaders/obj.f.glsl", NULL);
-    const char *overlay_f_source = (const char *) CFS.get_file("shaders/overlay.f.glsl", NULL);
-    const char *sky_v_source = (const char *) CFS.get_file("shaders/sky.v.glsl", NULL);
-    const char *sky_f_source = (const char *) CFS.get_file("shaders/sky.f.glsl", NULL);
+    const char *lava_uniforms[] = {
+        "projection",
+        "modelview",
+        "tex"
+    };
+    const char *obj_v_source =
+        (const char *) CFS.get_file("shaders/obj.v.glsl", NULL);
+    const char *obj_f_source =
+        (const char *) CFS.get_file("shaders/obj.f.glsl", NULL);
+    const char *overlay_f_source =
+        (const char *) CFS.get_file("shaders/overlay.f.glsl", NULL);
+    const char *sky_v_source =
+        (const char *) CFS.get_file("shaders/sky.v.glsl", NULL);
+    const char *sky_f_source =
+        (const char *) CFS.get_file("shaders/sky.f.glsl", NULL);
+    const char *lava_v_source =
+        (const char *) CFS.get_file("shaders/lava.v.glsl", NULL);
+    const char *lava_f_source =
+        (const char *) CFS.get_file("shaders/lava.f.glsl", NULL);
     if (obj_v_source == NULL || obj_f_source == NULL ||
             overlay_f_source == NULL ||
-            sky_v_source == NULL || sky_f_source == NULL)
+            sky_v_source == NULL || sky_f_source == NULL ||
+            lava_v_source == NULL || lava_f_source == NULL)
     {
         cerr << "Error loading shader sources" << endl;
         return false;
@@ -141,6 +162,13 @@ bool Client::initgl()
                 sky_uniforms, LEN(sky_uniforms)))
     {
         cerr << "Error creating sky program" << endl;
+        return false;
+    }
+    if (!m_lava_program.create(lava_v_source, lava_f_source,
+                lava_attrib_bindings, LEN(lava_attrib_bindings),
+                lava_uniforms, LEN(lava_uniforms)))
+    {
+        cerr << "Error creating lava program" << endl;
         return false;
     }
     if (!m_tank_obj.load("models/tank.obj", load_file))
@@ -171,12 +199,11 @@ bool Client::initgl()
         cerr << "Error creating tex quad attribute buffer" << endl;
         return false;
     }
-    const double sky_dist = 4500;
     vector<GLfloat> sky_attributes((NUM_SKY_STEPS + 1) * 2 * (3 * 3));
     for (int i = 0, idx = 0; i <= NUM_SKY_STEPS; i++)
     {
-        GLfloat x = sky_dist * sin(M_PI_4 + i * M_PI_2 / NUM_SKY_STEPS);
-        GLfloat y = sky_dist * cos(M_PI - M_PI_4 - i * M_PI_2 / NUM_SKY_STEPS);
+        GLfloat x = SKY_DIST * sin(M_PI_4 + i * M_PI_2 / NUM_SKY_STEPS);
+        GLfloat y = SKY_DIST * cos(M_PI - M_PI_4 - i * M_PI_2 / NUM_SKY_STEPS);
         sky_attributes[idx++] = x;
         sky_attributes[idx++] = y;
         sky_attributes[idx++] = -10.0;
@@ -241,6 +268,7 @@ void Client::redraw()
     draw_players();
     draw_map();
     draw_sky();
+    draw_lava();
 
     draw_overlay();
 
@@ -430,9 +458,40 @@ void Client::draw_sky()
             6 * sizeof(GLfloat), NULL);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
             6 * sizeof(GLfloat), (GLvoid *) (3 * sizeof(GLfloat)));
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, (NUM_SKY_STEPS + 1) * 2);
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, (NUM_SKY_STEPS + 1) * 2);
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+}
+
+void Client::draw_lava()
+{
+    m_lava_program.use();
+    m_tex_quad_attributes.bind();
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    m_projection.to_uniform(m_lava_program.uniform("projection"));
+    m_lava_texture.bind();
+    glUniform1i(m_lava_program.uniform("tex"), 0);
+    const int n_lavas = SKY_DIST / LAVA_SIZE;
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
+            5 * sizeof(GLfloat), NULL);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,
+            5 * sizeof(GLfloat), (GLvoid *) (3 * sizeof(GLfloat)));
+    for (int i = 0; i < n_lavas; i++)
+    {
+        for (int j = 0; j < n_lavas; j++)
+        {
+            m_modelview.push();
+            m_modelview.translate((i - n_lavas / 2) * LAVA_SIZE,
+                    (j - n_lavas / 2) * LAVA_SIZE, -2);
+            m_modelview.scale(LAVA_SIZE, LAVA_SIZE, 1);
+            m_modelview.to_uniform(m_lava_program.uniform("modelview"));
+            glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+            m_modelview.pop();
+        }
+    }
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
 }
