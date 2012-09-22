@@ -15,7 +15,7 @@ using namespace std;
 #define OPENGL_CONTEXT_MAJOR 3
 #define OPENGL_CONTEXT_MINOR 0
 
-#define SKY_DIST 4500
+#define SKY_DIST 2000
 #define NUM_SKY_STEPS 9
 #define LAVA_SIZE 100
 
@@ -474,7 +474,7 @@ void Client::draw_lava()
     m_projection.to_uniform(m_lava_program.uniform("projection"));
     m_lava_texture.bind();
     glUniform1i(m_lava_program.uniform("tex"), 0);
-    const int n_lavas = SKY_DIST / LAVA_SIZE;
+    const int n_lavas = 2 * SKY_DIST / LAVA_SIZE;
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
             5 * sizeof(GLfloat), NULL);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,
