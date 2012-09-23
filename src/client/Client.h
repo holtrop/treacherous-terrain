@@ -25,7 +25,7 @@ class Client
         void resize_window(int width, int height);
         void update(double elapsed_time);
         void redraw();
-        void draw_players();
+        void draw_player(refptr<Player> player);
         void draw_map();
         void draw_overlay();
         void draw_sky();

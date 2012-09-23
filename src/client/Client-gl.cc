@@ -266,7 +266,8 @@ void Client::redraw()
             m_player->x, m_player->y, 20,
             0, 0, 1);
 
-    draw_players();
+    // TODO: call draw_player() for each networked player
+    draw_player(m_player);
     draw_map();
     draw_sky();
     draw_lava();
@@ -276,12 +277,12 @@ void Client::redraw()
     m_window->display();
 }
 
-void Client::draw_players()
+void Client::draw_player(refptr<Player> player)
 {
     m_obj_program.use();
     m_modelview.push();
-    m_modelview.translate(m_player->x, m_player->y, 4);
-    m_modelview.rotate(m_player->direction * 180.0 / M_PI, 0, 0, 1);
+    m_modelview.translate(player->x, player->y, 4);
+    m_modelview.rotate(player->direction * 180.0 / M_PI, 0, 0, 1);
     m_modelview.scale(2, 2, 2);
     m_tank_obj.bindBuffers();
     glEnableVertexAttribArray(0);
