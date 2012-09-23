@@ -42,6 +42,12 @@ static const struct
     {{-0.5, -0.5, 0.0}, {0.0, 0.0}},
     {{0.5, -0.5, 0.0}, {1.0, 0.0}}
 };
+static const float quad_attributes[][3] = {
+    {0.5, 0.5, 0.0},
+    {-0.5, 0.5, 0.0},
+    {-0.5, -0.5, 0.0},
+    {0.5, -0.5, 0.0}
+};
 
 static bool load_file(const char *fname, WFObj::Buffer & buff)
 {
@@ -136,8 +142,10 @@ bool Client::initgl()
         (const char *) CFS.get_file("shaders/lava.v.glsl", NULL);
     const char *lava_f_source =
         (const char *) CFS.get_file("shaders/lava.f.glsl", NULL);
+    const char *overlay_hover_f_source =
+        (const char *) CFS.get_file("shaders/overlay_hover.f.glsl", NULL);
     if (obj_v_source == NULL || obj_f_source == NULL ||
-            overlay_f_source == NULL ||
+            overlay_f_source == NULL || overlay_hover_f_source == NULL ||
             sky_v_source == NULL || sky_f_source == NULL ||
             lava_v_source == NULL || lava_f_source == NULL)
     {
@@ -156,6 +164,13 @@ bool Client::initgl()
                 overlay_uniforms, LEN(overlay_uniforms)))
     {
         cerr << "Error creating overlay program" << endl;
+        return false;
+    }
+    if (!m_overlay_hover_program.create(obj_v_source, overlay_hover_f_source,
+                obj_attrib_bindings, LEN(obj_attrib_bindings),
+                sky_uniforms, LEN(sky_uniforms)))
+    {
+        cerr << "Error creating overlay hover program" << endl;
         return false;
     }
     if (!m_sky_program.create(sky_v_source, sky_f_source,
@@ -197,7 +212,13 @@ bool Client::initgl()
     if (!m_tex_quad_attributes.create(GL_ARRAY_BUFFER, GL_STATIC_DRAW,
                 tex_quad_attributes, sizeof(tex_quad_attributes)))
     {
-        cerr << "Error creating tex quad attribute buffer" << endl;
+        cerr << "Error creating tex quad attributes buffer" << endl;
+        return false;
+    }
+    if (!m_quad_attributes.create(GL_ARRAY_BUFFER, GL_STATIC_DRAW,
+                quad_attributes, sizeof(quad_attributes)))
+    {
+        cerr << "Error creating quad attributes buffer" << endl;
         return false;
     }
     vector<GLfloat> sky_attributes((NUM_SKY_STEPS + 1) * 2 * (3 * 3));
@@ -386,6 +407,7 @@ void Client::draw_map()
 
 void Client::draw_overlay()
 {
+    /* draw overlay map */
     int overlay_size = (int)(m_width * 0.15);
     glViewport(m_width - overlay_size - 50, m_height - overlay_size - 50,
             overlay_size, overlay_size);
@@ -441,9 +463,37 @@ void Client::draw_overlay()
     glPointSize(3);
     glDrawArrays(GL_POINTS, 0, 1);
 
+    /* draw hover bar */
+    glViewport(m_width - 200, 100, 150, 25);
+    m_overlay_hover_program.use();
+    m_quad_attributes.bind();
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), NULL);
+    GLMatrix::Identity.to_uniform(
+            m_overlay_hover_program.uniform("projection"));
+    modelview.load_identity();
+    modelview.translate(m_player->hover - 1, 0, 0);
+    modelview.scale(m_player->hover * 2, 2.0, 1.0);
+    modelview.to_uniform(m_overlay_hover_program.uniform("modelview"));
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+    /* draw hover bar border */
+    glViewport(0, 0, m_width, m_height);
+    m_overlay_program.use();
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), NULL);
+    GLMatrix::Identity.to_uniform(m_overlay_program.uniform("projection"));
+    modelview.load_identity();
+    modelview.ortho(0, m_width, 0, m_height, -1, 1);
+    modelview.translate(m_width - 200 + 150 / 2, 100 + 25 / 2, 0);
+    modelview.scale(150.1, 25.1, 1);
+    modelview.to_uniform(m_overlay_program.uniform("modelview"));
+    glUniform4f(m_overlay_program.uniform("color"), 1, 1, 1, 1);
+    glDrawArrays(GL_LINE_LOOP, 0, 4);
+    glDisableVertexAttribArray(0);
+
+    /* reset GL to normal state */
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
-    glViewport(0, 0, m_width, m_height);
 }
 
 void Client::draw_sky()

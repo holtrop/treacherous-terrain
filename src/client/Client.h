@@ -39,6 +39,7 @@ class Client
         int m_height;
         GLProgram m_obj_program;
         GLProgram m_overlay_program;
+        GLProgram m_overlay_hover_program;
         GLProgram m_sky_program;
         GLProgram m_lava_program;
         WFObj m_tank_obj;
@@ -49,6 +50,7 @@ class Client
         GLBuffer m_overlay_hex_indices;
         GLBuffer m_sky_attributes;
         GLBuffer m_tex_quad_attributes;
+        GLBuffer m_quad_attributes;
         refptr<Network> m_net_client;
         bool client_has_focus;
         sf::Texture m_lava_texture;
