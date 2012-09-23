@@ -1,4 +1,3 @@
-
 #include <math.h>
 #include <iostream>
 #include GL_INCLUDE_FILE
@@ -41,6 +40,12 @@ static const struct
     {{-0.5, 0.5, 0.0}, {0.0, 1.0}},
     {{-0.5, -0.5, 0.0}, {0.0, 0.0}},
     {{0.5, -0.5, 0.0}, {1.0, 0.0}}
+};
+static const float quad_attributes[][3] = {
+    {0.5, 0.5, 0.0},
+    {-0.5, 0.5, 0.0},
+    {-0.5, -0.5, 0.0},
+    {0.5, -0.5, 0.0}
 };
 
 static bool load_file(const char *fname, WFObj::Buffer & buff)
@@ -87,91 +92,37 @@ bool Client::initgl()
         return false;
     }
     glEnable(GL_DEPTH_TEST);
-    GLProgram::AttributeBinding obj_attrib_bindings[] = {
-        {0, "pos"},
-        {1, "normal"}
-    };
-    GLProgram::AttributeBinding sky_attrib_bindings[] = {
-        {0, "pos"},
-        {1, "color"}
-    };
-    GLProgram::AttributeBinding lava_attrib_bindings[] = {
-        {0, "pos"},
-        {1, "tex_coord"}
-    };
-    const char *obj_uniforms[] = {
-        "ambient",
-        "diffuse",
-        "specular",
-        "shininess",
-        "projection",
-        "modelview"
-    };
-    const char *overlay_uniforms[] = {
-        "projection",
-        "modelview",
-        "color"
-    };
-    const char *sky_uniforms[] = {
-        "projection",
-        "modelview"
-    };
-    const char *lava_uniforms[] = {
-        "projection",
-        "modelview",
-        "tex",
-        "shift"
-    };
-    const char *obj_v_source =
-        (const char *) CFS.get_file("shaders/obj.v.glsl", NULL);
-    const char *obj_f_source =
-        (const char *) CFS.get_file("shaders/obj.f.glsl", NULL);
-    const char *overlay_f_source =
-        (const char *) CFS.get_file("shaders/overlay.f.glsl", NULL);
-    const char *sky_v_source =
-        (const char *) CFS.get_file("shaders/sky.v.glsl", NULL);
-    const char *sky_f_source =
-        (const char *) CFS.get_file("shaders/sky.f.glsl", NULL);
-    const char *lava_v_source =
-        (const char *) CFS.get_file("shaders/lava.v.glsl", NULL);
-    const char *lava_f_source =
-        (const char *) CFS.get_file("shaders/lava.f.glsl", NULL);
-    if (obj_v_source == NULL || obj_f_source == NULL ||
-            overlay_f_source == NULL ||
-            sky_v_source == NULL || sky_f_source == NULL ||
-            lava_v_source == NULL || lava_f_source == NULL)
-    {
-        cerr << "Error loading shader sources" << endl;
+    if (!m_obj_program.create(
+                CFS.get_file("shaders/obj.v.glsl"),
+                CFS.get_file("shaders/obj.f.glsl"),
+                "pos", 0, "normal", 1, NULL,
+                "ambient", "diffuse", "specular", "shininess",
+                "projection", "modelview", NULL))
         return false;
-    }
-    if (!m_obj_program.create(obj_v_source, obj_f_source,
-                obj_attrib_bindings, LEN(obj_attrib_bindings),
-                obj_uniforms, LEN(obj_uniforms)))
-    {
-        cerr << "Error creating obj program" << endl;
+    if (!m_overlay_program.create(
+                CFS.get_file("shaders/obj.v.glsl"),
+                CFS.get_file("shaders/overlay.f.glsl"),
+                "pos", 0, "normal", 1, NULL,
+                "projection", "modelview", "color", NULL))
         return false;
-    }
-    if (!m_overlay_program.create(obj_v_source, overlay_f_source,
-                obj_attrib_bindings, LEN(obj_attrib_bindings),
-                overlay_uniforms, LEN(overlay_uniforms)))
-    {
-        cerr << "Error creating overlay program" << endl;
+    if (!m_overlay_hover_program.create(
+                CFS.get_file("shaders/obj.v.glsl"),
+                CFS.get_file("shaders/overlay_hover.f.glsl"),
+                "pos", 0, "normal", 1, NULL,
+                "projection", "modelview", NULL))
         return false;
-    }
-    if (!m_sky_program.create(sky_v_source, sky_f_source,
-                sky_attrib_bindings, LEN(sky_attrib_bindings),
-                sky_uniforms, LEN(sky_uniforms)))
-    {
-        cerr << "Error creating sky program" << endl;
+    if (!m_sky_program.create(
+                CFS.get_file("shaders/sky.v.glsl"),
+                CFS.get_file("shaders/sky.f.glsl"),
+                "pos", 0, "color", 1, NULL,
+                "projection", "modelview", NULL))
         return false;
-    }
-    if (!m_lava_program.create(lava_v_source, lava_f_source,
-                lava_attrib_bindings, LEN(lava_attrib_bindings),
-                lava_uniforms, LEN(lava_uniforms)))
-    {
-        cerr << "Error creating lava program" << endl;
+    if (!m_lava_program.create(
+                CFS.get_file("shaders/lava.v.glsl"),
+                CFS.get_file("shaders/lava.f.glsl"),
+                "pos", 0, "tex_coord", 1, NULL,
+                "projection", "modelview", "tex", "shift", NULL))
         return false;
-    }
     if (!m_tank_obj.load("models/tank.obj", load_file))
     {
         cerr << "Error loading tank model" << endl;
@@ -197,10 +148,16 @@ bool Client::initgl()
     if (!m_tex_quad_attributes.create(GL_ARRAY_BUFFER, GL_STATIC_DRAW,
                 tex_quad_attributes, sizeof(tex_quad_attributes)))
     {
-        cerr << "Error creating tex quad attribute buffer" << endl;
+        cerr << "Error creating tex quad attributes buffer" << endl;
         return false;
     }
-    vector<GLfloat> sky_attributes((NUM_SKY_STEPS + 1) * 2 * (3 * 3));
+    if (!m_quad_attributes.create(GL_ARRAY_BUFFER, GL_STATIC_DRAW,
+                quad_attributes, sizeof(quad_attributes)))
+    {
+        cerr << "Error creating quad attributes buffer" << endl;
+        return false;
+    }
+    vector<GLfloat> sky_attributes((NUM_SKY_STEPS + 1) * 2 * (3 + 3));
     for (int i = 0, idx = 0; i <= NUM_SKY_STEPS; i++)
     {
         GLfloat x = SKY_DIST * sin(M_PI_4 + i * M_PI_2 / NUM_SKY_STEPS);
@@ -258,22 +215,22 @@ void Client::redraw()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    double dir_x = cos((*m_players)[current_player].direction);
-    double dir_y = sin((*m_players)[current_player].direction);
+    double dir_x = cos(m_players[current_player]->direction);
+    double dir_y = sin(m_players[current_player]->direction);
     m_modelview.load_identity();
     m_modelview.look_at(
-            (*m_players)[current_player].x - dir_x * 25, (*m_players)[current_player].y - dir_y * 25, 30,
-            (*m_players)[current_player].x, (*m_players)[current_player].y, 20,
+            m_players[current_player]->x - dir_x * 25, m_players[current_player]->y - dir_y * 25, 30,
+            m_players[current_player]->x, m_players[current_player]->y, 20,
             0, 0, 1);
 
     // TODO: call draw_player() for each networked player
-	for(std::map<sf::Uint8, Player>::iterator piter = m_players->begin(); piter != m_players->end(); piter++)
-	{
-		draw_player(piter->second);
-	}	
-    
-	
-	draw_map();
+    for(std::map<sf::Uint8, refptr<Player> >::iterator piter = m_players.begin(); piter != m_players.end(); piter++)
+    {
+        draw_player(piter->second);
+    }
+
+
+    draw_map();
     draw_sky();
     draw_lava();
 
@@ -282,12 +239,12 @@ void Client::redraw()
     m_window->display();
 }
 
-void Client::draw_player(Player player)
+void Client::draw_player(refptr<Player> player)
 {
     m_obj_program.use();
     m_modelview.push();
-    m_modelview.translate(player.x, player.y, 4);
-    m_modelview.rotate(player.direction * 180.0 / M_PI, 0, 0, 1);
+    m_modelview.translate(player->x, player->y, 4);
+    m_modelview.rotate(player->direction * 180.0 / M_PI, 0, 0, 1);
     m_modelview.scale(2, 2, 2);
     m_tank_obj.bindBuffers();
     glEnableVertexAttribArray(0);
@@ -391,6 +348,7 @@ void Client::draw_map()
 
 void Client::draw_overlay()
 {
+    /* draw overlay map */
     int overlay_size = (int)(m_width * 0.15);
     glViewport(m_width - overlay_size - 50, m_height - overlay_size - 50,
             overlay_size, overlay_size);
@@ -403,8 +361,8 @@ void Client::draw_overlay()
     proj.ortho(-span, span, -span, span, -1, 1);
     proj.to_uniform(m_overlay_program.uniform("projection"));
     GLMatrix modelview;
-    modelview.rotate(90 - (*m_players)[current_player].direction * 180 / M_PI, 0, 0, 1);
-    modelview.translate(-(*m_players)[current_player].x, -(*m_players)[current_player].y, 0);
+    modelview.rotate(90 - m_players[current_player]->direction * 180 / M_PI, 0, 0, 1);
+    modelview.translate(-m_players[current_player]->x, -m_players[current_player]->y, 0);
     m_overlay_hex_attributes.bind();
     m_overlay_hex_indices.bind();
     glEnableVertexAttribArray(0);
@@ -446,9 +404,48 @@ void Client::draw_overlay()
     glPointSize(3);
     glDrawArrays(GL_POINTS, 0, 1);
 
+    /* draw hover bar */
+    glViewport(m_width - 200, 100, 150, 25);
+    m_overlay_hover_program.use();
+    m_quad_attributes.bind();
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), NULL);
+    GLMatrix::Identity.to_uniform(
+            m_overlay_hover_program.uniform("projection"));
+    modelview.load_identity();
+    modelview.translate(m_players[current_player]->hover - 1, 0, 0);
+    modelview.scale(m_players[current_player]->hover * 2, 2.0, 1.0);
+    modelview.to_uniform(m_overlay_hover_program.uniform("modelview"));
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+    /* draw map border */
+    glViewport(0, 0, m_width, m_height);
+    m_overlay_program.use();
+    m_quad_attributes.bind();
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), NULL);
+    GLMatrix::Identity.to_uniform(m_overlay_program.uniform("projection"));
+    modelview.load_identity();
+    modelview.ortho(0, m_width, 0, m_height, -1, 1);
+    modelview.translate(m_width - overlay_size / 2 - 50,
+            m_height - overlay_size / 2 - 50, 0);
+    modelview.scale(overlay_size + 0.1, overlay_size + 0.1, 1);
+    modelview.to_uniform(m_overlay_program.uniform("modelview"));
+    glUniform4f(m_overlay_program.uniform("color"), 1, 1, 1, 1);
+    glDrawArrays(GL_LINE_LOOP, 0, 4);
+
+    /* draw hover bar border */
+    modelview.load_identity();
+    modelview.ortho(0, m_width, 0, m_height, -1, 1);
+    modelview.translate(m_width - 200 + 150 / 2, 100 + 25 / 2, 0);
+    modelview.scale(150.1, 25.1, 1);
+    modelview.to_uniform(m_overlay_program.uniform("modelview"));
+    glDrawArrays(GL_LINE_LOOP, 0, 4);
+
+    /* reset GL to normal state */
+    glDisableVertexAttribArray(0);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
-    glViewport(0, 0, m_width, m_height);
 }
 
 void Client::draw_sky()
@@ -457,8 +454,8 @@ void Client::draw_sky()
     m_sky_attributes.bind();
     m_projection.to_uniform(m_sky_program.uniform("projection"));
     m_modelview.push();
-    m_modelview.translate((*m_players)[current_player].x, (*m_players)[current_player].y, 0);
-    m_modelview.rotate((*m_players)[current_player].direction * 180.0 / M_PI, 0, 0, 1);
+    m_modelview.translate(m_players[current_player]->x, m_players[current_player]->y, 0);
+    m_modelview.rotate(m_players[current_player]->direction * 180.0 / M_PI, 0, 0, 1);
     m_modelview.to_uniform(m_sky_program.uniform("modelview"));
     m_modelview.pop();
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,

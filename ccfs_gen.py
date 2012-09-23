@@ -47,6 +47,8 @@ def main(argv):
     c_file = open(out_fname, 'w')
     h_file = open(header_fname, 'w')
     c_file.write('#include <string.h>\n')
+    c_file.write('#include <iostream>\n')
+    c_file.write('using namespace std;\n')
     c_file.write('#include "%s"\n' % os.path.basename(header_fname))
     for p in paths:
         c_name = cname(p)
@@ -77,7 +79,8 @@ def main(argv):
     c_file.write('};\n')
 
     c_file.write('''
-const unsigned char *CCFSClass::get_file(const char *fname, unsigned int *length)
+const unsigned char *CCFSClass::get_file(const char *fname,
+    unsigned int *length, bool err_on_not_found)
 {
     int i;
     for (i = 0; store[i].fname != NULL; i++)
@@ -89,6 +92,8 @@ const unsigned char *CCFSClass::get_file(const char *fname, unsigned int *length
             return store[i].data;
         }
     }
+    if (err_on_not_found)
+        cerr << "Error loading file \\"" << fname << '"' << endl;
     return NULL;
 }
 
@@ -100,7 +105,8 @@ CCFSClass %s;
 class CCFSClass
 {
 public:
-    const unsigned char *get_file(const char *fname, unsigned int *length);
+    const unsigned char *get_file(const char *fname,
+        unsigned int *length = NULL, bool err_on_not_found = true);
 };
 
 extern CCFSClass %s;

@@ -1,4 +1,3 @@
-
 #ifndef PLAYER_H
 #define PLAYER_H
 
@@ -14,12 +13,12 @@ class Player
         double y;
         double direction; /* 0 = East, M_PI_2 = North, M_PI = West, ... */
         double hover;
-		sf::Uint8 w_pressed;
-		sf::Uint8 a_pressed;
-		sf::Uint8 s_pressed;
-		sf::Uint8 d_pressed;
-		sf::Int32 rel_mouse_movement;	
-		bool updated;
+        sf::Uint8 w_pressed;
+        sf::Uint8 a_pressed;
+        sf::Uint8 s_pressed;
+        sf::Uint8 d_pressed;
+        sf::Int32 rel_mouse_movement;
+        bool updated;
 
         Player();
 };

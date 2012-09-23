@@ -1,4 +1,3 @@
-
 #ifndef HEXTILE_H
 #define HEXTILE_H
 

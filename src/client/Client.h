@@ -1,4 +1,3 @@
-
 #ifndef CLIENT_H
 #define CLIENT_H
 
@@ -25,7 +24,7 @@ class Client
         void resize_window(int width, int height);
         void update(double elapsed_time);
         void redraw();
-        void draw_player(Player player);
+        void draw_player(refptr<Player> player);
         void draw_map();
         void draw_overlay();
         void draw_sky();
@@ -34,13 +33,14 @@ class Client
         refptr<sf::Window> m_window;
         sf::Clock m_clock;
         Map m_map;
-		sf::Uint8 current_player;
-		std::string current_player_name;
-        refptr< std::map<sf::Uint8, Player> > m_players;
+        sf::Uint8 current_player;
+        std::string current_player_name;
+        std::map<sf::Uint8, refptr<Player> > m_players;
         int m_width;
         int m_height;
         GLProgram m_obj_program;
         GLProgram m_overlay_program;
+        GLProgram m_overlay_hover_program;
         GLProgram m_sky_program;
         GLProgram m_lava_program;
         WFObj m_tank_obj;
@@ -51,6 +51,7 @@ class Client
         GLBuffer m_overlay_hex_indices;
         GLBuffer m_sky_attributes;
         GLBuffer m_tex_quad_attributes;
+        GLBuffer m_quad_attributes;
         refptr<Network> m_net_client;
         bool client_has_focus;
         sf::Texture m_lava_texture;

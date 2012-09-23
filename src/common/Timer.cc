@@ -23,7 +23,6 @@ void Timer::Update(void)
 {
     // Record the time step
     stepTime = ((myClock.getElapsedTime().asSeconds() / 1000.0f) * gameSpeed);
-    //stepTime = ((((sf::Window*)screen)->GetFrameTime() / 1000.0f) * gameSpeed);
     myClock.restart();
 
     // Add the time to the total time

@@ -1,4 +1,3 @@
-
 #ifndef REFPTR_H
 #define REFPTR_H REFPTR_H
 

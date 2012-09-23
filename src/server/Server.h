@@ -12,6 +12,6 @@ class Server{
     protected:
         void update(double elapsed_time);
         refptr<Network> m_net_server;
-        refptr< std::map<sf::Uint8, Player> > m_players;
+        std::map<sf::Uint8, refptr<Player> > m_players;
         sf::Clock m_clock;
 };
