@@ -1,4 +1,3 @@
-
 #include <math.h>
 #include "Client.h"
 #include "Types.h"
@@ -85,7 +84,7 @@ void Client::update(double elapsed_time)
 
     m_net_client->Receive();
     client_packet.clear();
-	// Handle all received data (only really want the latest)
+    // Handle all received data (only really want the latest)
     while(m_net_client->getData(client_packet))
     {
         // Update player position as calculated from the server.
@@ -105,28 +104,28 @@ void Client::update(double elapsed_time)
     sf::Uint8 d_pressed = KEY_NOT_PRESSED;
     sf::Int32 rel_mouse_movement = 0;
 
-	// This is a fix so that the mouse will not move outside the window and
+    // This is a fix so that the mouse will not move outside the window and
     // cause the user to click on another program.
     // Note:  Does not work well with fast movement.
     if(client_has_focus)
     {
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
-		{
-			a_pressed = KEY_PRESSED;
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-		{
-			d_pressed = KEY_PRESSED;
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-		{
-			w_pressed = KEY_PRESSED;
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-		{
-			s_pressed = KEY_PRESSED;
-		}
-		rel_mouse_movement = sf::Mouse::getPosition(*m_window).x - m_width / 2;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+        {
+            a_pressed = KEY_PRESSED;
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+        {
+            d_pressed = KEY_PRESSED;
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+        {
+            w_pressed = KEY_PRESSED;
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+        {
+            s_pressed = KEY_PRESSED;
+        }
+        rel_mouse_movement = sf::Mouse::getPosition(*m_window).x - m_width / 2;
         sf::Mouse::setPosition(sf::Vector2i(m_width / 2, m_height / 2), *m_window);
     }
 
