@@ -47,7 +47,8 @@ void Server::update( double elapsed_time )
     static sf::Int32 rel_mouse_movement = 0;
 
     m_net_server->Receive();
-    if(m_net_server->getData(server_packet))
+	// Handle all received data (only really want the latest)
+    while(m_net_server->getData(server_packet))
     {
         server_packet >> w_pressed;
         server_packet >> a_pressed;
