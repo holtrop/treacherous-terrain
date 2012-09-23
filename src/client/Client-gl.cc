@@ -477,21 +477,32 @@ void Client::draw_overlay()
     modelview.to_uniform(m_overlay_hover_program.uniform("modelview"));
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-    /* draw hover bar border */
+    /* draw map border */
     glViewport(0, 0, m_width, m_height);
     m_overlay_program.use();
+    m_quad_attributes.bind();
+    glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), NULL);
     GLMatrix::Identity.to_uniform(m_overlay_program.uniform("projection"));
+    modelview.load_identity();
+    modelview.ortho(0, m_width, 0, m_height, -1, 1);
+    modelview.translate(m_width - overlay_size / 2 - 50,
+            m_height - overlay_size / 2 - 50, 0);
+    modelview.scale(overlay_size + 0.1, overlay_size + 0.1, 1);
+    modelview.to_uniform(m_overlay_program.uniform("modelview"));
+    glUniform4f(m_overlay_program.uniform("color"), 1, 1, 1, 1);
+    glDrawArrays(GL_LINE_LOOP, 0, 4);
+
+    /* draw hover bar border */
     modelview.load_identity();
     modelview.ortho(0, m_width, 0, m_height, -1, 1);
     modelview.translate(m_width - 200 + 150 / 2, 100 + 25 / 2, 0);
     modelview.scale(150.1, 25.1, 1);
     modelview.to_uniform(m_overlay_program.uniform("modelview"));
-    glUniform4f(m_overlay_program.uniform("color"), 1, 1, 1, 1);
     glDrawArrays(GL_LINE_LOOP, 0, 4);
-    glDisableVertexAttribArray(0);
 
     /* reset GL to normal state */
+    glDisableVertexAttribArray(0);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
 }
