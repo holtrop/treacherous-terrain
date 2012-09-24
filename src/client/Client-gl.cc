@@ -221,7 +221,7 @@ bool Client::initgl()
         cerr << "Error creating quad attributes buffer" << endl;
         return false;
     }
-    vector<GLfloat> sky_attributes((NUM_SKY_STEPS + 1) * 2 * (3 * 3));
+    vector<GLfloat> sky_attributes((NUM_SKY_STEPS + 1) * 2 * (3 + 3));
     for (int i = 0, idx = 0; i <= NUM_SKY_STEPS; i++)
     {
         GLfloat x = SKY_DIST * sin(M_PI_4 + i * M_PI_2 / NUM_SKY_STEPS);
