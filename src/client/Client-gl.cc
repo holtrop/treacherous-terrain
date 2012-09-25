@@ -93,100 +93,37 @@ bool Client::initgl()
         return false;
     }
     glEnable(GL_DEPTH_TEST);
-    GLProgram::AttributeBinding obj_attrib_bindings[] = {
-        {0, "pos"},
-        {1, "normal"}
-    };
-    GLProgram::AttributeBinding sky_attrib_bindings[] = {
-        {0, "pos"},
-        {1, "color"}
-    };
-    GLProgram::AttributeBinding lava_attrib_bindings[] = {
-        {0, "pos"},
-        {1, "tex_coord"}
-    };
-    const char *obj_uniforms[] = {
-        "ambient",
-        "diffuse",
-        "specular",
-        "shininess",
-        "projection",
-        "modelview"
-    };
-    const char *overlay_uniforms[] = {
-        "projection",
-        "modelview",
-        "color"
-    };
-    const char *sky_uniforms[] = {
-        "projection",
-        "modelview"
-    };
-    const char *lava_uniforms[] = {
-        "projection",
-        "modelview",
-        "tex",
-        "shift"
-    };
-    const char *obj_v_source =
-        (const char *) CFS.get_file("shaders/obj.v.glsl", NULL);
-    const char *obj_f_source =
-        (const char *) CFS.get_file("shaders/obj.f.glsl", NULL);
-    const char *overlay_f_source =
-        (const char *) CFS.get_file("shaders/overlay.f.glsl", NULL);
-    const char *sky_v_source =
-        (const char *) CFS.get_file("shaders/sky.v.glsl", NULL);
-    const char *sky_f_source =
-        (const char *) CFS.get_file("shaders/sky.f.glsl", NULL);
-    const char *lava_v_source =
-        (const char *) CFS.get_file("shaders/lava.v.glsl", NULL);
-    const char *lava_f_source =
-        (const char *) CFS.get_file("shaders/lava.f.glsl", NULL);
-    const char *overlay_hover_f_source =
-        (const char *) CFS.get_file("shaders/overlay_hover.f.glsl", NULL);
-    if (obj_v_source == NULL || obj_f_source == NULL ||
-            overlay_f_source == NULL || overlay_hover_f_source == NULL ||
-            sky_v_source == NULL || sky_f_source == NULL ||
-            lava_v_source == NULL || lava_f_source == NULL)
-    {
-        cerr << "Error loading shader sources" << endl;
+    if (!m_obj_program.create(
+                CFS.get_file("shaders/obj.v.glsl"),
+                CFS.get_file("shaders/obj.f.glsl"),
+                "pos", 0, "normal", 1, NULL,
+                "ambient", "diffuse", "specular", "shininess",
+                "projection", "modelview", NULL))
         return false;
-    }
-    if (!m_obj_program.create(obj_v_source, obj_f_source,
-                obj_attrib_bindings, LEN(obj_attrib_bindings),
-                obj_uniforms, LEN(obj_uniforms)))
-    {
-        cerr << "Error creating obj program" << endl;
+    if (!m_overlay_program.create(
+                CFS.get_file("shaders/obj.v.glsl"),
+                CFS.get_file("shaders/overlay.f.glsl"),
+                "pos", 0, "normal", 1, NULL,
+                "projection", "modelview", "color", NULL))
         return false;
-    }
-    if (!m_overlay_program.create(obj_v_source, overlay_f_source,
-                obj_attrib_bindings, LEN(obj_attrib_bindings),
-                overlay_uniforms, LEN(overlay_uniforms)))
-    {
-        cerr << "Error creating overlay program" << endl;
+    if (!m_overlay_hover_program.create(
+                CFS.get_file("shaders/obj.v.glsl"),
+                CFS.get_file("shaders/overlay_hover.f.glsl"),
+                "pos", 0, "normal", 1, NULL,
+                "projection", "modelview", NULL))
         return false;
-    }
-    if (!m_overlay_hover_program.create(obj_v_source, overlay_hover_f_source,
-                obj_attrib_bindings, LEN(obj_attrib_bindings),
-                sky_uniforms, LEN(sky_uniforms)))
-    {
-        cerr << "Error creating overlay hover program" << endl;
+    if (!m_sky_program.create(
+                CFS.get_file("shaders/sky.v.glsl"),
+                CFS.get_file("shaders/sky.f.glsl"),
+                "pos", 0, "color", 1, NULL,
+                "projection", "modelview", NULL))
         return false;
-    }
-    if (!m_sky_program.create(sky_v_source, sky_f_source,
-                sky_attrib_bindings, LEN(sky_attrib_bindings),
-                sky_uniforms, LEN(sky_uniforms)))
-    {
-        cerr << "Error creating sky program" << endl;
+    if (!m_lava_program.create(
+                CFS.get_file("shaders/lava.v.glsl"),
+                CFS.get_file("shaders/lava.f.glsl"),
+                "pos", 0, "tex_coord", 1, NULL,
+                "projection", "modelview", "tex", "shift", NULL))
         return false;
-    }
-    if (!m_lava_program.create(lava_v_source, lava_f_source,
-                lava_attrib_bindings, LEN(lava_attrib_bindings),
-                lava_uniforms, LEN(lava_uniforms)))
-    {
-        cerr << "Error creating lava program" << endl;
-        return false;
-    }
     if (!m_tank_obj.load("models/tank.obj", load_file))
     {
         cerr << "Error loading tank model" << endl;

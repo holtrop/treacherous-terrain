@@ -1,5 +1,6 @@
 
 #include "GLProgram.h"
+#include <stdint.h>
 #include <iostream>
 
 using namespace std;
@@ -7,7 +8,6 @@ using namespace std;
 GLProgram::GLProgram()
 {
     m_id = 0;
-    m_uniform_locations = NULL;
 }
 
 GLProgram::~GLProgram()
@@ -16,29 +16,50 @@ GLProgram::~GLProgram()
     {
         glDeleteProgram(m_id);
     }
-    if (m_uniform_locations != NULL)
-    {
-        delete[] m_uniform_locations;
-    }
 }
 
-bool GLProgram::create(const char *v_source, const char *f_source,
-                GLProgram::AttributeBinding *bindings, int n_bindings,
-                const char **uniforms, int n_uniforms)
+bool GLProgram::create(const char *v_source, const char *f_source, ...)
 {
+    va_list va;
+    va_start(va, f_source);
+    bool rv = createv(v_source, f_source, va);
+    va_end(va);
+    return rv;
+}
+
+bool GLProgram::create(const uint8_t *v_source, const uint8_t *f_source, ...)
+{
+    va_list va;
+    va_start(va, f_source);
+    bool rv = createv((const char *) v_source, (const char *) f_source, va);
+    va_end(va);
+    return rv;
+}
+
+bool GLProgram::createv(const char *v_source, const char *f_source, va_list va)
+{
+    if (v_source == NULL || f_source == NULL)
+        return false;
     if (!m_v_shader.create(GL_VERTEX_SHADER, v_source))
         return false;
     if (!m_f_shader.create(GL_FRAGMENT_SHADER, f_source))
         return false;
     m_id = glCreateProgram();
     if (m_id <= 0)
+    {
+        cerr << "Error allocating GL program object" << endl;
         return false;
+    }
     glAttachShader(m_id, m_v_shader.get_id());
     glAttachShader(m_id, m_f_shader.get_id());
 
-    for (int i = 0; i < n_bindings; i++)
+    for (;;)
     {
-        glBindAttribLocation(m_id, bindings[i].index, bindings[i].name);
+        const char *attribute_name = va_arg(va, const char *);
+        if (attribute_name == NULL)
+            break;
+        GLuint attribute_index = va_arg(va, uint32_t);
+        glBindAttribLocation(m_id, attribute_index, attribute_name);
     }
 
     glLinkProgram(m_id);
@@ -59,14 +80,14 @@ bool GLProgram::create(const char *v_source, const char *f_source,
         return false;
     }
 
-    if (n_uniforms > 0)
+    for (;;)
     {
-        m_uniform_locations = new GLint[n_uniforms];
-        for (int i = 0; i < n_uniforms; i++)
-        {
-            m_uniform_locations[i] = glGetUniformLocation(m_id, uniforms[i]);
-            m_uniform_location_names[uniforms[i]] = m_uniform_locations[i];
-        }
+        const char *uniform_name = va_arg(va, const char *);
+        if (uniform_name == NULL)
+            break;
+        GLint loc = glGetUniformLocation(m_id, uniform_name);
+        m_uniform_locations.push_back(loc);
+        m_uniform_location_names[uniform_name] = loc;
     }
 
     return true;
