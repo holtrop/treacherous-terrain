@@ -258,17 +258,22 @@ void Client::redraw()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    double dir_x = cos(m_player->direction);
-    double dir_y = sin(m_player->direction);
+    double dir_x = cos((*m_players)[current_player].direction);
+    double dir_y = sin((*m_players)[current_player].direction);
     m_modelview.load_identity();
     m_modelview.look_at(
-            m_player->x - dir_x * 25, m_player->y - dir_y * 25, 30,
-            m_player->x, m_player->y, 20,
+            (*m_players)[current_player].x - dir_x * 25, (*m_players)[current_player].y - dir_y * 25, 30,
+            (*m_players)[current_player].x, (*m_players)[current_player].y, 20,
             0, 0, 1);
 
     // TODO: call draw_player() for each networked player
-    draw_player(m_player);
-    draw_map();
+	for(std::map<sf::Uint8, Player>::iterator piter = m_players->begin(); piter != m_players->end(); piter++)
+	{
+		draw_player(piter->second);
+	}	
+    
+	
+	draw_map();
     draw_sky();
     draw_lava();
 
@@ -277,12 +282,12 @@ void Client::redraw()
     m_window->display();
 }
 
-void Client::draw_player(refptr<Player> player)
+void Client::draw_player(Player player)
 {
     m_obj_program.use();
     m_modelview.push();
-    m_modelview.translate(player->x, player->y, 4);
-    m_modelview.rotate(player->direction * 180.0 / M_PI, 0, 0, 1);
+    m_modelview.translate(player.x, player.y, 4);
+    m_modelview.rotate(player.direction * 180.0 / M_PI, 0, 0, 1);
     m_modelview.scale(2, 2, 2);
     m_tank_obj.bindBuffers();
     glEnableVertexAttribArray(0);
@@ -398,8 +403,8 @@ void Client::draw_overlay()
     proj.ortho(-span, span, -span, span, -1, 1);
     proj.to_uniform(m_overlay_program.uniform("projection"));
     GLMatrix modelview;
-    modelview.rotate(90 - m_player->direction * 180 / M_PI, 0, 0, 1);
-    modelview.translate(-m_player->x, -m_player->y, 0);
+    modelview.rotate(90 - (*m_players)[current_player].direction * 180 / M_PI, 0, 0, 1);
+    modelview.translate(-(*m_players)[current_player].x, -(*m_players)[current_player].y, 0);
     m_overlay_hex_attributes.bind();
     m_overlay_hex_indices.bind();
     glEnableVertexAttribArray(0);
@@ -452,8 +457,8 @@ void Client::draw_sky()
     m_sky_attributes.bind();
     m_projection.to_uniform(m_sky_program.uniform("projection"));
     m_modelview.push();
-    m_modelview.translate(m_player->x, m_player->y, 0);
-    m_modelview.rotate(m_player->direction * 180.0 / M_PI, 0, 0, 1);
+    m_modelview.translate((*m_players)[current_player].x, (*m_players)[current_player].y, 0);
+    m_modelview.rotate((*m_players)[current_player].direction * 180.0 / M_PI, 0, 0, 1);
     m_modelview.to_uniform(m_sky_program.uniform("modelview"));
     m_modelview.pop();
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,

@@ -1,6 +1,7 @@
 #include "Network.h"
 #include "Player.h"
 #include "refptr.h"
+#include "SFML/Config.hpp"
 
 class Server{
     public:
@@ -11,6 +12,6 @@ class Server{
     protected:
         void update(double elapsed_time);
         refptr<Network> m_net_server;
-        refptr<Player> m_player;
+        refptr< std::map<sf::Uint8, Player> > m_players;
         sf::Clock m_clock;
 };
