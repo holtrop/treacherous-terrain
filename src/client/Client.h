@@ -1,4 +1,3 @@
-
 #ifndef CLIENT_H
 #define CLIENT_H
 
@@ -18,7 +17,7 @@ class Client
     public:
         Client();
         ~Client();
-        void run(bool fullscreen, int width, int height);
+        void run(bool fullscreen, int width, int height, std::string pname);
     protected:
         bool create_window(bool fullscreen, int width, int height);
         bool initgl();
@@ -34,7 +33,9 @@ class Client
         refptr<sf::Window> m_window;
         sf::Clock m_clock;
         Map m_map;
-        refptr<Player> m_player;
+        sf::Uint8 current_player;
+        std::string current_player_name;
+        std::map<sf::Uint8, refptr<Player> > m_players;
         int m_width;
         int m_height;
         GLProgram m_obj_program;

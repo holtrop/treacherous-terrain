@@ -1,4 +1,3 @@
-
 #include "Map.h"
 #include "HexTile.h"
 
