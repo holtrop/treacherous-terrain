@@ -29,6 +29,7 @@ class Client
         void draw_overlay();
         void draw_sky();
         void draw_lava();
+        void draw_shot_ring();
 
         refptr<sf::Window> m_window;
         sf::Clock m_clock;
@@ -43,6 +44,7 @@ class Client
         GLProgram m_overlay_hover_program;
         GLProgram m_sky_program;
         GLProgram m_lava_program;
+        GLProgram m_shot_ring_program;
         WFObj m_tank_obj;
         WFObj m_tile_obj;
         GLMatrix m_projection;
@@ -56,6 +58,9 @@ class Client
         refptr<Network> m_net_client;
         bool client_has_focus;
         sf::Texture m_lava_texture;
+        bool m_left_button_pressed;
+        bool m_drawing_shot;
+        float m_drawing_shot_distance;
 };
 
 #endif

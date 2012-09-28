@@ -3,6 +3,10 @@
 #include "Types.h"
 #include "Timer.h"
 
+/* TODO: this should be moved to common somewhere */
+#define MAX_SHOT_DISTANCE 250.0
+#define SHOT_EXPAND_SPEED 75.0
+
 Client::Client()
 {
     m_net_client = new Network();
@@ -10,6 +14,8 @@ Client::Client()
     client_has_focus = true;
     m_players.clear();
     current_player = 0;
+    m_left_button_pressed = false;
+    m_drawing_shot = false;
 }
 
 Client::~Client()
@@ -52,6 +58,18 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
                     break;
                 }
                 break;
+            case sf::Event::MouseButtonPressed:
+                if (event.mouseButton.button == sf::Mouse::Left)
+                    m_left_button_pressed = true;
+                break;
+            case sf::Event::MouseButtonReleased:
+                if (event.mouseButton.button == sf::Mouse::Left)
+                {
+                    m_drawing_shot = false;
+                    m_left_button_pressed = false;
+                    /* TODO: trigger shot network message */
+                }
+                break;
             case sf::Event::Resized:
                 resize_window(event.size.width, event.size.height);
                 break;
@@ -72,10 +90,7 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
         client_timer.Update();
 
         update(elapsed_time);
-        if(m_players.size() > 0)
-        {
-            redraw();
-        }
+        redraw();
         last_time = current_time;
 
         // temporary for now.  otherwise this thread consumed way too processing
@@ -87,7 +102,6 @@ void Client::update(double elapsed_time)
 {
     static bool registered_player = false;
     sf::Packet client_packet;
-
 
     m_net_client->Receive();
     client_packet.clear();
@@ -188,6 +202,21 @@ void Client::update(double elapsed_time)
             }
             rel_mouse_movement = sf::Mouse::getPosition(*m_window).x - m_width / 2;
             sf::Mouse::setPosition(sf::Vector2i(m_width / 2, m_height / 2), *m_window);
+
+            if (m_left_button_pressed)
+            {
+                if (m_drawing_shot)
+                {
+                    m_drawing_shot_distance += SHOT_EXPAND_SPEED * elapsed_time;
+                    if (m_drawing_shot_distance > MAX_SHOT_DISTANCE)
+                        m_drawing_shot_distance = MAX_SHOT_DISTANCE;
+                }
+                else
+                {
+                    m_drawing_shot = true;
+                    m_drawing_shot_distance = 0.0f;
+                }
+            }
         }
 
         // Send an update to the server if something has changed

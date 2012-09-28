@@ -17,7 +17,7 @@ using namespace std;
 #define SKY_DIST 2000
 #define NUM_SKY_STEPS 9
 #define LAVA_SIZE 100
-#define SHOT_RING_WIDTH 20.0f
+#define SHOT_RING_WIDTH 10.0f
 #define NUM_SHOT_RING_STEPS 24
 
 /* points of a horizontal hexagon 1.0 units high */
@@ -125,6 +125,12 @@ bool Client::initgl()
                 "pos", 0, "tex_coord", 1, NULL,
                 "projection", "modelview", "tex", "shift", NULL))
         return false;
+    if (!m_shot_ring_program.create(
+                CFS.get_file("shaders/shot-ring.v.glsl"),
+                CFS.get_file("shaders/shot-ring.f.glsl"),
+                "pos", 0, NULL,
+                "projection", "modelview", "scale", NULL))
+        return false;
     if (!m_tank_obj.load("models/tank.obj", load_file))
     {
         cerr << "Error loading tank model" << endl;
@@ -221,7 +227,7 @@ bool Client::initgl()
         cerr << "Error creating lava texture" << endl;
         return false;
     }
-    m_obj_program.use();
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     return true;
 }
 
@@ -240,26 +246,28 @@ void Client::redraw()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    double dir_x = cos(m_players[current_player]->direction);
-    double dir_y = sin(m_players[current_player]->direction);
-    m_modelview.load_identity();
-    m_modelview.look_at(
-            m_players[current_player]->x - dir_x * 25, m_players[current_player]->y - dir_y * 25, 30,
-            m_players[current_player]->x, m_players[current_player]->y, 20,
-            0, 0, 1);
-
-    // TODO: call draw_player() for each networked player
-    for(std::map<sf::Uint8, refptr<Player> >::iterator piter = m_players.begin(); piter != m_players.end(); piter++)
+    if (m_players.size() > 0)
     {
-        draw_player(piter->second);
+        double dir_x = cos(m_players[current_player]->direction);
+        double dir_y = sin(m_players[current_player]->direction);
+        m_modelview.load_identity();
+        m_modelview.look_at(
+                m_players[current_player]->x - dir_x * 25, m_players[current_player]->y - dir_y * 25, 30,
+                m_players[current_player]->x, m_players[current_player]->y, 20,
+                0, 0, 1);
+
+        for(std::map<sf::Uint8, refptr<Player> >::iterator piter = m_players.begin(); piter != m_players.end(); piter++)
+        {
+            draw_player(piter->second);
+        }
+
+        draw_map();
+        draw_sky();
+        draw_lava();
+        draw_shot_ring();
+
+        draw_overlay();
     }
-
-
-    draw_map();
-    draw_sky();
-    draw_lava();
-
-    draw_overlay();
 
     m_window->display();
 }
@@ -379,7 +387,6 @@ void Client::draw_overlay()
             overlay_size, overlay_size);
     glEnable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     m_overlay_program.use();
     GLMatrix proj;
     const float span = 50 * 8;
@@ -527,4 +534,27 @@ void Client::draw_lava()
     }
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
+}
+
+void Client::draw_shot_ring()
+{
+    if (m_drawing_shot)
+    {
+        m_shot_ring_program.use();
+        m_shot_ring_attributes.bind();
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE,
+                4 * sizeof(GLfloat), NULL);
+        glEnable(GL_BLEND);
+        m_modelview.push();
+        m_modelview.translate(m_players[current_player]->x,
+                m_players[current_player]->y, 0.4);
+        m_projection.to_uniform(m_shot_ring_program.uniform("projection"));
+        m_modelview.to_uniform(m_shot_ring_program.uniform("modelview"));
+        glUniform1f(m_shot_ring_program.uniform("scale"), m_drawing_shot_distance);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, (NUM_SHOT_RING_STEPS + 1) * 2);
+        m_modelview.pop();
+        glDisableVertexAttribArray(0);
+        glDisable(GL_BLEND);
+    }
 }
