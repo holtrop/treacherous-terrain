@@ -17,6 +17,8 @@ using namespace std;
 #define SKY_DIST 2000
 #define NUM_SKY_STEPS 9
 #define LAVA_SIZE 100
+#define SHOT_RING_WIDTH 20.0f
+#define NUM_SHOT_RING_STEPS 24
 
 /* points of a horizontal hexagon 1.0 units high */
 static const float overlay_hex_attributes[][3] = {
@@ -181,6 +183,29 @@ bool Client::initgl()
                 sizeof(sky_attributes[0]) * sky_attributes.size()))
     {
         cerr << "Error creating sky attribute buffer" << endl;
+        return false;
+    }
+    vector<GLfloat> shot_ring_attributes((NUM_SHOT_RING_STEPS + 1) * 2 * 4);
+    for (int i = 0, idx = 0; i <= NUM_SHOT_RING_STEPS; i++)
+    {
+        double angle = i * M_PI * 2.0 / NUM_SHOT_RING_STEPS;
+        GLfloat x = sin(angle);
+        GLfloat y = cos(angle);
+        shot_ring_attributes[idx++] = x;
+        shot_ring_attributes[idx++] = y;
+        shot_ring_attributes[idx++] = 0.0f;
+        shot_ring_attributes[idx++] = 0.0f;
+
+        shot_ring_attributes[idx++] = x;
+        shot_ring_attributes[idx++] = y;
+        shot_ring_attributes[idx++] = 0.0f;
+        shot_ring_attributes[idx++] = SHOT_RING_WIDTH;
+    }
+    if (!m_shot_ring_attributes.create(GL_ARRAY_BUFFER, GL_STATIC_DRAW,
+                &shot_ring_attributes[0],
+                sizeof(shot_ring_attributes[0]) * shot_ring_attributes.size()))
+    {
+        cerr << "Error creating shot ring attributes buffer" << endl;
         return false;
     }
     unsigned int lava_texture_length;
