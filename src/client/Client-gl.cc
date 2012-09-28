@@ -553,8 +553,16 @@ void Client::draw_shot_ring()
         m_modelview.to_uniform(m_shot_ring_program.uniform("modelview"));
         glUniform1f(m_shot_ring_program.uniform("scale"), m_drawing_shot_distance);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, (NUM_SHOT_RING_STEPS + 1) * 2);
+
+        glDisable(GL_BLEND);
+        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE,
+                8 * sizeof(GLfloat), NULL);
+        glDrawArrays(GL_LINE_STRIP, 0, NUM_SHOT_RING_STEPS + 1);
+        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE,
+                8 * sizeof(GLfloat), (void *) (4 * sizeof(GLfloat)));
+        glDrawArrays(GL_LINE_STRIP, 0, NUM_SHOT_RING_STEPS + 1);
+
         m_modelview.pop();
         glDisableVertexAttribArray(0);
-        glDisable(GL_BLEND);
     }
 }
