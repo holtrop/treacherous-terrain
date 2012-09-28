@@ -87,6 +87,7 @@ class Network{
         static void Transmit();
         static void Receive();
         static void Reset();
+        static bool pendingMessages();
 };
 
 sf::Packet& operator <<(sf::Packet& Packet, const Network_Messages_T& NMT);

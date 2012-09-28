@@ -14,6 +14,26 @@ Client::Client()
 
 Client::~Client()
 {
+    // Send disconnect message
+    sf::Packet client_packet;
+    sf::Uint8 packet_type = PLAYER_DISCONNECT;
+    client_packet.clear();
+    client_packet << packet_type;
+    client_packet << current_player;
+    m_net_client->sendData(client_packet, true);
+
+    // No time out needed here, since the
+    // message will timeout after a couple of attempts
+    // then exit anyway.
+    while(m_net_client->pendingMessages())
+    {
+        m_net_client->Receive();
+        m_net_client->Transmit();
+
+        // temporary for now.  otherwise this thread consumed way too processing
+        sf::sleep(sf::seconds(0.005)); // 5 milli-seconds
+    }
+
     m_net_client->Destroy();
 }
 
@@ -100,13 +120,15 @@ void Client::update(double elapsed_time)
         {
             case PLAYER_CONNECT:
             {
+                sf::Uint32 players_address = 0u;
                 sf::Uint8 pindex;
                 std::string name = "";
                 client_packet >> pindex;
                 client_packet >> name;
+                client_packet >> players_address;
                 // Should be a much better way of doing this.
                 // Perhaps generate a random number
-                if(name == current_player_name)
+                if((sf::Uint32)((sf::Uint64)(&m_players)) == players_address)
                 {
                     current_player = pindex;
                 }
@@ -138,7 +160,11 @@ void Client::update(double elapsed_time)
             }
             case PLAYER_DISCONNECT:
             {
-                // This will remove the player once the disconnect algorithm is implemented
+                sf::Uint8 player_index;
+                // This completely removes the player from the game
+                // Deletes member from the player list
+                client_packet >> player_index;
+                m_players.erase(player_index);
                 break;
             }
             case PLAYER_DEATH:
@@ -218,11 +244,17 @@ void Client::update(double elapsed_time)
     }
     else if(!registered_player)
     {
+        // Needs to be 32 bit so that the packet << overload will work.
+        sf::Uint32 players_address = (sf::Uint32)((sf::Uint64)(&m_players));
         sf::Uint8 packet_type = PLAYER_CONNECT;
         client_packet.clear();
         client_packet << packet_type;
         client_packet << current_player;
         client_packet << current_player_name;
+        // Send the address of the players map.  This will server as a unique
+        // identifier and prevent users with the same name from controlling
+        // each other.
+        client_packet << players_address;
         m_net_client->sendData(client_packet, true);
         registered_player = true;
     }

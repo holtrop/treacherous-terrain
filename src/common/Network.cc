@@ -388,6 +388,11 @@ void Network::Reset()
     message_timer.restart();
 }
 
+bool Network::pendingMessages()
+{
+    return (transmit_queue.size() > 0);
+}
+
 sf::Packet& operator <<(sf::Packet& Packet, const Network_Messages_T& NMT)
 {
     sf::Uint8 net_msg_t = (sf::Uint8)NMT;
@@ -401,3 +406,4 @@ sf::Packet& operator >>(sf::Packet& Packet, Network_Messages_T& NMT)
     NMT = (Network_Messages_T)net_msg_t;
     return Packet;
 }
+

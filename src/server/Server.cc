@@ -58,12 +58,14 @@ void Server::update( double elapsed_time )
         {
             case PLAYER_CONNECT:
             {
+                sf::Uint32 players_address = 0u;
                 refptr<Player> p = new Player();
                 std::string pname;
                 sf::Uint8 pindex;
 
                 server_packet >> pindex;
                 server_packet >> pname;
+                server_packet >> players_address;
                 // When a player connects, we need to associate
                 // that player with a new ID. find first unused id
                 // player zero means a player does not exist.
@@ -82,10 +84,12 @@ void Server::update( double elapsed_time )
                     // Alert all connected clients of all the connected players.
                     for(std::map<sf::Uint8, refptr<Player> >::iterator piter = m_players.begin(); piter !=  m_players.end(); piter++)
                     {
+                        sf::Uint32 paddress = ((piter->first == pindex) ? players_address : 0u);
                         server_packet.clear();
                         server_packet << ptype;
                         server_packet << piter->first;
                         server_packet << piter->second->name;
+                        server_packet << paddress;
                         // Send correct starting locations so that they match
                         // the other players screens.
                         server_packet << piter->second->direction;
@@ -114,8 +118,21 @@ void Server::update( double elapsed_time )
             }
             case PLAYER_DISCONNECT:
             {
+                sf::Uint8 pindex;
+                std::size_t num_erased = 0;
                 // This completely removes the player from the game
                 // Deletes member from the player list
+                server_packet >> pindex;
+                num_erased = m_players.erase(pindex);
+                if(1 == num_erased)
+                {
+                    // Player existed, alert all connected clients.
+                    server_packet.clear();
+                    server_packet << ptype;
+                    server_packet << pindex;
+                    m_net_server->sendData(server_packet, true);
+                }
+
                 break;
             }
             case PLAYER_DEATH:
