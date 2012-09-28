@@ -52,6 +52,7 @@ class Client
         GLBuffer m_sky_attributes;
         GLBuffer m_tex_quad_attributes;
         GLBuffer m_quad_attributes;
+        GLBuffer m_shot_ring_attributes;
         refptr<Network> m_net_client;
         bool client_has_focus;
         sf::Texture m_lava_texture;
