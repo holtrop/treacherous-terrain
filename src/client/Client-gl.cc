@@ -250,10 +250,12 @@ void Client::redraw()
     {
         m_modelview.load_identity();
         m_modelview.look_at(
-                m_players[current_player]->x - m_player_dir_x * 25,
-                m_players[current_player]->y - m_player_dir_y * 25,
+                m_players[m_current_player]->x - m_player_dir_x * 25,
+                m_players[m_current_player]->y - m_player_dir_y * 25,
                 30,
-                m_players[current_player]->x, m_players[current_player]->y, 20,
+                m_players[m_current_player]->x,
+                m_players[m_current_player]->y,
+                20,
                 0, 0, 1);
 
         for(std::map<sf::Uint8, refptr<Player> >::iterator piter = m_players.begin(); piter != m_players.end(); piter++)
@@ -393,8 +395,9 @@ void Client::draw_overlay()
     proj.ortho(-span, span, -span, span, -1, 1);
     proj.to_uniform(m_overlay_program.uniform("projection"));
     GLMatrix modelview;
-    modelview.rotate(90 - m_players[current_player]->direction * 180 / M_PI, 0, 0, 1);
-    modelview.translate(-m_players[current_player]->x, -m_players[current_player]->y, 0);
+    modelview.rotate(90 - m_players[m_current_player]->direction * 180 / M_PI, 0, 0, 1);
+    modelview.translate(-m_players[m_current_player]->x,
+            -m_players[m_current_player]->y, 0);
     m_overlay_hex_attributes.bind();
     m_overlay_hex_indices.bind();
     glEnableVertexAttribArray(0);
@@ -445,8 +448,8 @@ void Client::draw_overlay()
     GLMatrix::Identity.to_uniform(
             m_overlay_hover_program.uniform("projection"));
     modelview.load_identity();
-    modelview.translate(m_players[current_player]->hover - 1, 0, 0);
-    modelview.scale(m_players[current_player]->hover * 2, 2.0, 1.0);
+    modelview.translate(m_players[m_current_player]->hover - 1, 0, 0);
+    modelview.scale(m_players[m_current_player]->hover * 2, 2.0, 1.0);
     modelview.to_uniform(m_overlay_hover_program.uniform("modelview"));
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
@@ -486,8 +489,10 @@ void Client::draw_sky()
     m_sky_attributes.bind();
     m_projection.to_uniform(m_sky_program.uniform("projection"));
     m_modelview.push();
-    m_modelview.translate(m_players[current_player]->x, m_players[current_player]->y, 0);
-    m_modelview.rotate(m_players[current_player]->direction * 180.0 / M_PI, 0, 0, 1);
+    m_modelview.translate(m_players[m_current_player]->x,
+            m_players[m_current_player]->y, 0);
+    m_modelview.rotate(m_players[m_current_player]->direction * 180.0 / M_PI,
+            0, 0, 1);
     m_modelview.to_uniform(m_sky_program.uniform("modelview"));
     m_modelview.pop();
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
@@ -544,8 +549,8 @@ void Client::draw_shot_ring()
         m_shot_ring_attributes.bind();
         glEnableVertexAttribArray(0);
         m_modelview.push();
-        m_modelview.translate(m_players[current_player]->x,
-                m_players[current_player]->y, 0.4);
+        m_modelview.translate(m_players[m_current_player]->x,
+                m_players[m_current_player]->y, 0.4);
         m_projection.to_uniform(m_shot_ring_program.uniform("projection"));
         m_modelview.to_uniform(m_shot_ring_program.uniform("modelview"));
         glUniform1f(m_shot_ring_program.uniform("scale"),

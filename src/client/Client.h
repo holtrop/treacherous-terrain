@@ -37,8 +37,8 @@ class Client
         refptr<sf::Window> m_window;
         sf::Clock m_clock;
         Map m_map;
-        sf::Uint8 current_player;
-        std::string current_player_name;
+        sf::Uint8 m_current_player;
+        std::string m_current_player_name;
         std::map<sf::Uint8, refptr<Player> > m_players;
         int m_width;
         int m_height;
@@ -59,7 +59,7 @@ class Client
         GLBuffer m_quad_attributes;
         GLBuffer m_shot_ring_attributes;
         refptr<Network> m_net_client;
-        bool client_has_focus;
+        bool m_client_has_focus;
         sf::Texture m_lava_texture;
         bool m_left_button_pressed;
         bool m_drawing_shot;

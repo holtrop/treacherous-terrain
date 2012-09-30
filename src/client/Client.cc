@@ -11,9 +11,9 @@ Client::Client()
 {
     m_net_client = new Network();
     m_net_client->Create(59243, "127.0.0.1"); // Just connect to local host for now - testing
-    client_has_focus = true;
+    m_client_has_focus = true;
     m_players.clear();
-    current_player = 0;
+    m_current_player = 0;
     m_left_button_pressed = false;
     m_drawing_shot = false;
 }
@@ -28,7 +28,7 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
 {
     Timer client_timer;
     client_timer.Init();
-    current_player_name = pname;
+    m_current_player_name = pname;
     if (!create_window(fullscreen, width, height))
         return;
     m_clock.restart();
@@ -74,10 +74,10 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
                 resize_window(event.size.width, event.size.height);
                 break;
             case sf::Event::LostFocus:
-                client_has_focus = false;
+                m_client_has_focus = false;
                 break;
             case sf::Event::GainedFocus:
-                client_has_focus = true;
+                m_client_has_focus = true;
                 break;
             default:
                 break;
@@ -120,9 +120,9 @@ void Client::update(double elapsed_time)
                 client_packet >> name;
                 // Should be a much better way of doing this.
                 // Perhaps generate a random number
-                if(name == current_player_name)
+                if(name == m_current_player_name)
                 {
-                    current_player = pindex;
+                    m_current_player = pindex;
                 }
 
                 // Create a new player if one does not exist.
@@ -182,7 +182,7 @@ void Client::update(double elapsed_time)
         // This is a fix so that the mouse will not move outside the window and
         // cause the user to click on another program.
         // Note:  Does not work well with fast movement.
-        if(client_has_focus)
+        if(m_client_has_focus)
         {
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
             {
@@ -220,28 +220,28 @@ void Client::update(double elapsed_time)
         }
 
         /* decrease player hover when not over a tile */
-        if (m_map.get_tile_at(m_players[current_player]->x,
-                    m_players[current_player]->y).isNull())
+        if (m_map.get_tile_at(m_players[m_current_player]->x,
+                    m_players[m_current_player]->y).isNull())
         {
-            m_players[current_player]->hover -= elapsed_time / 10;
-            if (m_players[current_player]->hover < 0)
-                m_players[current_player]->hover = 0;
+            m_players[m_current_player]->hover -= elapsed_time / 10;
+            if (m_players[m_current_player]->hover < 0)
+                m_players[m_current_player]->hover = 0;
         }
 
-        m_player_dir_x = cos(m_players[current_player]->direction);
-        m_player_dir_y = sin(m_players[current_player]->direction);
+        m_player_dir_x = cos(m_players[m_current_player]->direction);
+        m_player_dir_y = sin(m_players[m_current_player]->direction);
 
         // Send an update to the server if something has changed
-        if((m_players[current_player]->w_pressed != w_pressed) ||
-           (m_players[current_player]->a_pressed != a_pressed) ||
-           (m_players[current_player]->s_pressed != s_pressed) ||
-           (m_players[current_player]->d_pressed != d_pressed) ||
-           (m_players[current_player]->rel_mouse_movement !=  rel_mouse_movement))
+        if((m_players[m_current_player]->w_pressed != w_pressed) ||
+           (m_players[m_current_player]->a_pressed != a_pressed) ||
+           (m_players[m_current_player]->s_pressed != s_pressed) ||
+           (m_players[m_current_player]->d_pressed != d_pressed) ||
+           (m_players[m_current_player]->rel_mouse_movement !=  rel_mouse_movement))
         {
             sf::Uint8 packet_type = PLAYER_UPDATE;
             client_packet.clear();
             client_packet << packet_type;
-            client_packet << current_player;
+            client_packet << m_current_player;
             client_packet << w_pressed;
             client_packet << a_pressed;
             client_packet << s_pressed;
@@ -250,11 +250,11 @@ void Client::update(double elapsed_time)
 
             m_net_client->sendData(client_packet);
 
-            m_players[current_player]->w_pressed = w_pressed;
-            m_players[current_player]->a_pressed = a_pressed;
-            m_players[current_player]->s_pressed = s_pressed;
-            m_players[current_player]->d_pressed = d_pressed;
-            m_players[current_player]->rel_mouse_movement =  rel_mouse_movement;
+            m_players[m_current_player]->w_pressed = w_pressed;
+            m_players[m_current_player]->a_pressed = a_pressed;
+            m_players[m_current_player]->s_pressed = s_pressed;
+            m_players[m_current_player]->d_pressed = d_pressed;
+            m_players[m_current_player]->rel_mouse_movement =  rel_mouse_movement;
         }
     }
     else if(!registered_player)
@@ -262,8 +262,8 @@ void Client::update(double elapsed_time)
         sf::Uint8 packet_type = PLAYER_CONNECT;
         client_packet.clear();
         client_packet << packet_type;
-        client_packet << current_player;
-        client_packet << current_player_name;
+        client_packet << m_current_player;
+        client_packet << m_current_player_name;
         m_net_client->sendData(client_packet, true);
         registered_player = true;
     }
