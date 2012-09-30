@@ -219,6 +219,15 @@ void Client::update(double elapsed_time)
             }
         }
 
+        /* decrease player hover when not over a tile */
+        if (m_map.get_tile_at(m_players[current_player]->x,
+                    m_players[current_player]->y).isNull())
+        {
+            m_players[current_player]->hover -= elapsed_time / 10;
+            if (m_players[current_player]->hover < 0)
+                m_players[current_player]->hover = 0;
+        }
+
         // Send an update to the server if something has changed
         if((m_players[current_player]->w_pressed != w_pressed) ||
            (m_players[current_player]->a_pressed != a_pressed) ||
