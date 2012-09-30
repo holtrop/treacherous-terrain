@@ -30,7 +30,10 @@ class Client
         void draw_sky();
         void draw_lava();
         void draw_shot_ring();
+        void draw_shot_ring_instance();
 
+        double m_player_dir_x;
+        double m_player_dir_y;
         refptr<sf::Window> m_window;
         sf::Clock m_clock;
         Map m_map;

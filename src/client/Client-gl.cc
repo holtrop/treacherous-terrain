@@ -129,7 +129,7 @@ bool Client::initgl()
                 CFS.get_file("shaders/shot-ring.v.glsl"),
                 CFS.get_file("shaders/shot-ring.f.glsl"),
                 "pos", 0, NULL,
-                "projection", "modelview", "scale", NULL))
+                "projection", "modelview", "scale", "width", NULL))
         return false;
     if (!m_tank_obj.load("models/tank.obj", load_file))
     {
@@ -205,7 +205,7 @@ bool Client::initgl()
         shot_ring_attributes[idx++] = x;
         shot_ring_attributes[idx++] = y;
         shot_ring_attributes[idx++] = 0.0f;
-        shot_ring_attributes[idx++] = SHOT_RING_WIDTH;
+        shot_ring_attributes[idx++] = 1.0f;
     }
     if (!m_shot_ring_attributes.create(GL_ARRAY_BUFFER, GL_STATIC_DRAW,
                 &shot_ring_attributes[0],
@@ -248,11 +248,11 @@ void Client::redraw()
 
     if (m_players.size() > 0)
     {
-        double dir_x = cos(m_players[current_player]->direction);
-        double dir_y = sin(m_players[current_player]->direction);
         m_modelview.load_identity();
         m_modelview.look_at(
-                m_players[current_player]->x - dir_x * 25, m_players[current_player]->y - dir_y * 25, 30,
+                m_players[current_player]->x - m_player_dir_x * 25,
+                m_players[current_player]->y - m_player_dir_y * 25,
+                30,
                 m_players[current_player]->x, m_players[current_player]->y, 20,
                 0, 0, 1);
 
@@ -543,26 +543,41 @@ void Client::draw_shot_ring()
         m_shot_ring_program.use();
         m_shot_ring_attributes.bind();
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE,
-                4 * sizeof(GLfloat), NULL);
-        glEnable(GL_BLEND);
         m_modelview.push();
         m_modelview.translate(m_players[current_player]->x,
                 m_players[current_player]->y, 0.4);
         m_projection.to_uniform(m_shot_ring_program.uniform("projection"));
         m_modelview.to_uniform(m_shot_ring_program.uniform("modelview"));
-        glUniform1f(m_shot_ring_program.uniform("scale"), m_drawing_shot_distance);
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, (NUM_SHOT_RING_STEPS + 1) * 2);
-
-        glDisable(GL_BLEND);
-        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE,
-                8 * sizeof(GLfloat), NULL);
-        glDrawArrays(GL_LINE_STRIP, 0, NUM_SHOT_RING_STEPS + 1);
-        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE,
-                8 * sizeof(GLfloat), (void *) (4 * sizeof(GLfloat)));
-        glDrawArrays(GL_LINE_STRIP, 0, NUM_SHOT_RING_STEPS + 1);
-
+        glUniform1f(m_shot_ring_program.uniform("scale"),
+                m_drawing_shot_distance);
+        glUniform1f(m_shot_ring_program.uniform("width"), SHOT_RING_WIDTH);
+        draw_shot_ring_instance();
+        float mid_dist = m_drawing_shot_distance + SHOT_RING_WIDTH / 2.0;
+        m_modelview.translate(mid_dist * m_player_dir_x,
+                mid_dist * m_player_dir_y, 0.01);
+        m_modelview.to_uniform(m_shot_ring_program.uniform("modelview"));
+        glUniform1f(m_shot_ring_program.uniform("scale"),
+                0.45 * SHOT_RING_WIDTH);
+        glUniform1f(m_shot_ring_program.uniform("width"),
+                0.05 * SHOT_RING_WIDTH);
+        draw_shot_ring_instance();
         m_modelview.pop();
         glDisableVertexAttribArray(0);
     }
+}
+
+void Client::draw_shot_ring_instance()
+{
+    glEnable(GL_BLEND);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE,
+            4 * sizeof(GLfloat), NULL);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, (NUM_SHOT_RING_STEPS + 1) * 2);
+
+    glDisable(GL_BLEND);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE,
+            8 * sizeof(GLfloat), NULL);
+    glDrawArrays(GL_LINE_STRIP, 0, NUM_SHOT_RING_STEPS + 1);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE,
+            8 * sizeof(GLfloat), (void *) (4 * sizeof(GLfloat)));
+    glDrawArrays(GL_LINE_STRIP, 0, NUM_SHOT_RING_STEPS + 1);
 }

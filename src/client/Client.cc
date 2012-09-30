@@ -228,6 +228,9 @@ void Client::update(double elapsed_time)
                 m_players[current_player]->hover = 0;
         }
 
+        m_player_dir_x = cos(m_players[current_player]->direction);
+        m_player_dir_y = sin(m_players[current_player]->direction);
+
         // Send an update to the server if something has changed
         if((m_players[current_player]->w_pressed != w_pressed) ||
            (m_players[current_player]->a_pressed != a_pressed) ||
