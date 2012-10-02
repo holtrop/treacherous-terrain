@@ -8,5 +8,12 @@
 #define PLAYER_DISCONNECT   0x2Bu
 #define PLAYER_DEATH        0x3Cu
 #define PLAYER_UPDATE       0x4Du
+#define PLAYER_SHOT         0x5Eu
+
+#define TILE_DAMAGED        0xA1u
+
+// The speed of the projectile 
+#define PROJECTILE_VELOCITY       100.0
+
 
 #endif

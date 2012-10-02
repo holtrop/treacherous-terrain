@@ -11,6 +11,7 @@ HexTile::HexTile(float x, float y, float size)
     m_x = x;
     m_y = y;
     m_size = size;
+    m_damage_state = UNDAMAGED;
 }
 
 bool HexTile::point_within(float x, float y)
@@ -38,4 +39,13 @@ bool HexTile::point_within(float x, float y)
     if (fabsf(y_120) > m_size)
         return false;
     return true;
+}
+
+void HexTile::shot()
+{
+    if(m_damage_state < DESTROYED)
+    {
+        // Note:  This only works because these are in order in the ENUM.
+        m_damage_state = (Tile_Damage_States_t)((int)(m_damage_state) + 1);
+    }
 }

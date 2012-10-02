@@ -16,6 +16,7 @@ Client::Client()
     m_current_player = 0;
     m_left_button_pressed = false;
     m_drawing_shot = false;
+    m_shot_fired = false;
 }
 
 Client::~Client()
@@ -121,16 +122,19 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
                     break;
                 }
                 break;
-            case sf::Event::MouseButtonPressed:
-                if (event.mouseButton.button == sf::Mouse::Left)
+            case sf::Event::MouseButtonPressed:                
+                if((event.mouseButton.button == sf::Mouse::Left) &&
+                   (m_shot_fired == false) && // Don't allow shots ontop of each other
+                   (m_client_has_focus))
                     m_left_button_pressed = true;
                 break;
             case sf::Event::MouseButtonReleased:
-                if (event.mouseButton.button == sf::Mouse::Left)
+                if((event.mouseButton.button == sf::Mouse::Left) &&
+                   (m_client_has_focus))
                 {
                     m_drawing_shot = false;
                     m_left_button_pressed = false;
-                    /* TODO: trigger shot network message */
+                    m_shot_fired = true;
                 }
                 break;
             case sf::Event::Resized:
@@ -244,6 +248,20 @@ void Client::update(double elapsed_time)
                 // This will set a death flag in the player struct.
                 break;
             }
+            
+            case TILE_DAMAGED:
+            {
+                float x;
+                float y;
+                client_packet >> x;
+                client_packet >> y;
+                if((!m_map.get_tile_at(x, y).isNull()))
+                {
+                    m_map.get_tile_at(x, y)->shot();                    
+                }
+                break;
+            }
+            
             default :
             {
                 // Eat the packet
@@ -333,6 +351,18 @@ void Client::update(double elapsed_time)
             m_players[m_current_player]->s_pressed = s_pressed;
             m_players[m_current_player]->d_pressed = d_pressed;
             m_players[m_current_player]->rel_mouse_movement =  rel_mouse_movement;
+        }
+        
+        if(m_shot_fired)
+        {
+            sf::Uint8 packet_type = PLAYER_SHOT;
+            client_packet.clear();
+            client_packet << packet_type;
+            client_packet << m_current_player;
+            client_packet << m_drawing_shot_distance;
+            m_net_client->sendData(client_packet, true);            
+            m_shot_fired = false;
+            m_drawing_shot_distance = 0;
         }
     }
     else if(!registered_player)

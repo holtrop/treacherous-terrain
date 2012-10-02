@@ -149,6 +149,24 @@ void Server::update( double elapsed_time )
                 // playing field.
                 break;
             }
+            
+            case PLAYER_SHOT:
+            {
+                sf::Uint8 pindex;
+                float shot_distance;
+                server_packet >> pindex;
+                server_packet >> shot_distance;
+                m_players[pindex]->m_shot_distance = shot_distance;
+                m_players[pindex]->m_shot_start_time = Timer::GetTimeDouble();
+                
+                // Need to store off the current player location so that the
+                // correct tile can be calculated later.
+                m_players[pindex]->m_shot_start_x = m_players[pindex]->x;
+                m_players[pindex]->m_shot_start_y = m_players[pindex]->y;
+                m_players[pindex]->m_shot_direction = m_players[pindex]->direction;
+                break;
+            }
+            
             default:
             {
                 // Just eat the packet
@@ -177,6 +195,35 @@ void Server::update( double elapsed_time )
                 }
                 m_players[pindex]->updated = true;
             }
+            if((m_players[pindex]->m_shot_distance > 0.0) &&
+               (m_players[pindex]->m_shot_start_time > 0.0))
+            {
+                // Calculate the distance the projectile travelled so far
+                float distance_so_far = 0.0;
+                distance_so_far = (Timer::GetTimeDouble() - m_players[pindex]->m_shot_start_time) * PROJECTILE_VELOCITY;
+                if(distance_so_far > m_players[pindex]->m_shot_distance)
+                {
+                    float player_dir_x = cos(m_players[pindex]->m_shot_direction);
+                    float player_dir_y = sin(m_players[pindex]->m_shot_direction);
+                    float tile_x = m_players[pindex]->m_shot_start_x + (player_dir_x * m_players[pindex]->m_shot_distance);
+                    float tile_y = m_players[pindex]->m_shot_start_y + (player_dir_y * m_players[pindex]->m_shot_distance); 
+                    if((!m_map.get_tile_at(tile_x, tile_y).isNull()) &&
+                       (m_map.get_tile_at(tile_x, tile_y)->get_damage_state() < HexTile::DESTROYED))
+                    {
+                        // Send a message to all clients letting them know a tile was damaged
+                        sf::Uint8 ptype = TILE_DAMAGED;
+                        server_packet.clear();
+                        server_packet << ptype;
+                        server_packet << tile_x;
+                        server_packet << tile_y;
+                        m_net_server->sendData(server_packet, true);
+                        m_map.get_tile_at(tile_x, tile_y)->shot();
+                    }
+                    m_players[pindex]->m_shot_distance = 0.0;
+                    m_players[pindex]->m_shot_start_time = 0.0;
+                }
+            }
+            
             if (KEY_PRESSED == m_players[pindex]->a_pressed)
             {
                 double direction = m_players[pindex]->direction + M_PI_2;

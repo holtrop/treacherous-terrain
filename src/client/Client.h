@@ -67,6 +67,7 @@ class Client
         bool m_left_button_pressed;
         bool m_drawing_shot;
         float m_drawing_shot_distance;
+        bool m_shot_fired;
 };
 
 #endif
