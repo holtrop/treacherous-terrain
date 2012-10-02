@@ -3,13 +3,19 @@
 #include "Types.h"
 #include "Timer.h"
 
+/* TODO: this should be moved to common somewhere */
+#define MAX_SHOT_DISTANCE 250.0
+#define SHOT_EXPAND_SPEED 75.0
+
 Client::Client()
 {
     m_net_client = new Network();
     m_net_client->Create(59243, "127.0.0.1"); // Just connect to local host for now - testing
-    client_has_focus = true;
+    m_client_has_focus = true;
     m_players.clear();
-    current_player = 0;
+    m_current_player = 0;
+    m_left_button_pressed = false;
+    m_drawing_shot = false;
 }
 
 Client::~Client()
@@ -23,7 +29,7 @@ Client::~Client()
     client_timer.Init();
     client_packet.clear();
     client_packet << packet_type;
-    client_packet << current_player;
+    client_packet << m_current_player;
     m_net_client->sendData(client_packet, true);
 
     // No time out needed here, since the
@@ -51,7 +57,7 @@ Client::~Client()
                     // This completely removes the player from the game
                     // Deletes member from the player list
                     client_packet >> player_index;
-                    if(player_index == current_player)
+                    if(player_index == m_current_player)
                     {
                         connection_closed = true;
                     }
@@ -82,7 +88,7 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
 {
     Timer client_timer;
     client_timer.Init();
-    current_player_name = pname;
+    m_current_player_name = pname;
     if (!create_window(fullscreen, width, height))
         return;
     m_clock.restart();
@@ -112,14 +118,26 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
                     break;
                 }
                 break;
+            case sf::Event::MouseButtonPressed:
+                if (event.mouseButton.button == sf::Mouse::Left)
+                    m_left_button_pressed = true;
+                break;
+            case sf::Event::MouseButtonReleased:
+                if (event.mouseButton.button == sf::Mouse::Left)
+                {
+                    m_drawing_shot = false;
+                    m_left_button_pressed = false;
+                    /* TODO: trigger shot network message */
+                }
+                break;
             case sf::Event::Resized:
                 resize_window(event.size.width, event.size.height);
                 break;
             case sf::Event::LostFocus:
-                client_has_focus = false;
+                m_client_has_focus = false;
                 break;
             case sf::Event::GainedFocus:
-                client_has_focus = true;
+                m_client_has_focus = true;
                 break;
             default:
                 break;
@@ -132,10 +150,7 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
         client_timer.Update();
 
         update(elapsed_time);
-        if(m_players.size() > 0)
-        {
-            redraw();
-        }
+        redraw();
         last_time = current_time;
 
         // temporary for now.  otherwise this thread consumed way too processing
@@ -147,7 +162,6 @@ void Client::update(double elapsed_time)
 {
     static bool registered_player = false;
     sf::Packet client_packet;
-
 
     m_net_client->Receive();
     client_packet.clear();
@@ -168,10 +182,9 @@ void Client::update(double elapsed_time)
                 client_packet >> players_port;
                 // Should be a much better way of doing this.
                 // Perhaps generate a random number
-                if((name == current_player_name) &&
-                   (m_net_client->getLocalPort() == players_port))
+                if(name == m_current_player_name)
                 {
-                    current_player = pindex;
+                    m_current_player = pindex;
                 }
 
                 // Create a new player if one does not exist.
@@ -235,7 +248,7 @@ void Client::update(double elapsed_time)
         // This is a fix so that the mouse will not move outside the window and
         // cause the user to click on another program.
         // Note:  Does not work well with fast movement.
-        if(client_has_focus)
+        if(m_client_has_focus)
         {
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
             {
@@ -255,19 +268,46 @@ void Client::update(double elapsed_time)
             }
             rel_mouse_movement = sf::Mouse::getPosition(*m_window).x - m_width / 2;
             sf::Mouse::setPosition(sf::Vector2i(m_width / 2, m_height / 2), *m_window);
+
+            if (m_left_button_pressed)
+            {
+                if (m_drawing_shot)
+                {
+                    m_drawing_shot_distance += SHOT_EXPAND_SPEED * elapsed_time;
+                    if (m_drawing_shot_distance > MAX_SHOT_DISTANCE)
+                        m_drawing_shot_distance = MAX_SHOT_DISTANCE;
+                }
+                else
+                {
+                    m_drawing_shot = true;
+                    m_drawing_shot_distance = 0.0f;
+                }
+            }
         }
 
+        /* decrease player hover when not over a tile */
+        if (m_map.get_tile_at(m_players[m_current_player]->x,
+                    m_players[m_current_player]->y).isNull())
+        {
+            m_players[m_current_player]->hover -= elapsed_time / 10;
+            if (m_players[m_current_player]->hover < 0)
+                m_players[m_current_player]->hover = 0;
+        }
+
+        m_player_dir_x = cos(m_players[m_current_player]->direction);
+        m_player_dir_y = sin(m_players[m_current_player]->direction);
+
         // Send an update to the server if something has changed
-        if((m_players[current_player]->w_pressed != w_pressed) ||
-           (m_players[current_player]->a_pressed != a_pressed) ||
-           (m_players[current_player]->s_pressed != s_pressed) ||
-           (m_players[current_player]->d_pressed != d_pressed) ||
-           (m_players[current_player]->rel_mouse_movement !=  rel_mouse_movement))
+        if((m_players[m_current_player]->w_pressed != w_pressed) ||
+           (m_players[m_current_player]->a_pressed != a_pressed) ||
+           (m_players[m_current_player]->s_pressed != s_pressed) ||
+           (m_players[m_current_player]->d_pressed != d_pressed) ||
+           (m_players[m_current_player]->rel_mouse_movement !=  rel_mouse_movement))
         {
             sf::Uint8 packet_type = PLAYER_UPDATE;
             client_packet.clear();
             client_packet << packet_type;
-            client_packet << current_player;
+            client_packet << m_current_player;
             client_packet << w_pressed;
             client_packet << a_pressed;
             client_packet << s_pressed;
@@ -276,11 +316,11 @@ void Client::update(double elapsed_time)
 
             m_net_client->sendData(client_packet);
 
-            m_players[current_player]->w_pressed = w_pressed;
-            m_players[current_player]->a_pressed = a_pressed;
-            m_players[current_player]->s_pressed = s_pressed;
-            m_players[current_player]->d_pressed = d_pressed;
-            m_players[current_player]->rel_mouse_movement =  rel_mouse_movement;
+            m_players[m_current_player]->w_pressed = w_pressed;
+            m_players[m_current_player]->a_pressed = a_pressed;
+            m_players[m_current_player]->s_pressed = s_pressed;
+            m_players[m_current_player]->d_pressed = d_pressed;
+            m_players[m_current_player]->rel_mouse_movement =  rel_mouse_movement;
         }
     }
     else if(!registered_player)
@@ -290,8 +330,8 @@ void Client::update(double elapsed_time)
         sf::Uint8 packet_type = PLAYER_CONNECT;
         client_packet.clear();
         client_packet << packet_type;
-        client_packet << current_player;
-        client_packet << current_player_name;
+        client_packet << m_current_player;
+        client_packet << m_current_player_name;
         // Send the players port.  This will server as a unique
         // identifier and prevent users with the same name from controlling
         // each other.
