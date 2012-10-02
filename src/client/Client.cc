@@ -114,6 +114,9 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
                 case sf::Keyboard::Escape:
                     m_window->close();
                     break;
+                case sf::Keyboard::F1:
+                    grab_mouse(!m_mouse_grabbed);
+                    break;
                 default:
                     break;
                 }
@@ -156,6 +159,19 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
         // temporary for now.  otherwise this thread consumed way too processing
         sf::sleep(sf::seconds(0.005)); // 5 milli-seconds
     }
+}
+
+void Client::recenter_cursor()
+{
+    sf::Mouse::setPosition(sf::Vector2i(m_width / 2, m_height / 2), *m_window);
+}
+
+void Client::grab_mouse(bool grab)
+{
+    m_mouse_grabbed = grab;
+    m_window->setMouseCursorVisible(!grab);
+    if (grab)
+        recenter_cursor();
 }
 
 void Client::update(double elapsed_time)
@@ -268,8 +284,11 @@ void Client::update(double elapsed_time)
             {
                 s_pressed = KEY_PRESSED;
             }
-            rel_mouse_movement = sf::Mouse::getPosition(*m_window).x - m_width / 2;
-            sf::Mouse::setPosition(sf::Vector2i(m_width / 2, m_height / 2), *m_window);
+            if (m_mouse_grabbed)
+            {
+                rel_mouse_movement = sf::Mouse::getPosition(*m_window).x - m_width / 2;
+                recenter_cursor();
+            }
 
             if (m_left_button_pressed)
             {

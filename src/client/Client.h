@@ -24,6 +24,8 @@ class Client
         void resize_window(int width, int height);
         void update(double elapsed_time);
         void redraw();
+        void grab_mouse(bool grab);
+        void recenter_cursor();
         void draw_player(refptr<Player> player);
         void draw_map();
         void draw_overlay();
@@ -32,6 +34,7 @@ class Client
         void draw_shot_ring();
         void draw_shot_ring_instance();
 
+        bool m_mouse_grabbed;
         double m_player_dir_x;
         double m_player_dir_y;
         refptr<sf::Window> m_window;
