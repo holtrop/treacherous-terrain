@@ -182,7 +182,8 @@ void Client::update(double elapsed_time)
                 client_packet >> players_port;
                 // Should be a much better way of doing this.
                 // Perhaps generate a random number
-                if(name == m_current_player_name)
+                if((name == m_current_player_name) &&
+                   (players_port == m_net_client->getLocalPort()))
                 {
                     m_current_player = pindex;
                 }
