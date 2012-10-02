@@ -166,6 +166,17 @@ void Server::update( double elapsed_time )
 
         if(m_players[pindex]->m_client->disconnect == CONNECTED)
         {
+            /* decrease player hover when not over a tile */
+            if((m_players[pindex]->hover > 0) &&
+               (m_map.get_tile_at(m_players[pindex]->x, m_players[pindex]->y).isNull()))
+            {
+                m_players[pindex]->hover -= elapsed_time / 10;
+                if (m_players[pindex]->hover < 0)
+                {
+                    m_players[pindex]->hover = 0;
+                }
+                m_players[pindex]->updated = true;
+            }
             if (KEY_PRESSED == m_players[pindex]->a_pressed)
             {
                 double direction = m_players[pindex]->direction + M_PI_2;
@@ -211,6 +222,7 @@ void Server::update( double elapsed_time )
                 server_packet << m_players[pindex]->direction;
                 server_packet << m_players[pindex]->x;
                 server_packet << m_players[pindex]->y;
+                server_packet << m_players[pindex]->hover;
                 m_net_server->sendData(server_packet);
                 m_players[pindex]->updated = false;
            }

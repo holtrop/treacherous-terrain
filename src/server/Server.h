@@ -2,6 +2,7 @@
 #include "Player.h"
 #include "refptr.h"
 #include "SFML/Config.hpp"
+#include "Map.h"
 
 class Server{
     public:
@@ -14,4 +15,5 @@ class Server{
         refptr<Network> m_net_server;
         std::map<sf::Uint8, refptr<Player> > m_players;
         sf::Clock m_clock;
+        Map m_map;
 };

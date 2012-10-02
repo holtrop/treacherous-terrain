@@ -210,6 +210,7 @@ void Client::update(double elapsed_time)
                     client_packet >> m_players[player_index]->direction;
                     client_packet >> m_players[player_index]->x;
                     client_packet >> m_players[player_index]->y;
+                    client_packet >> m_players[player_index]->hover;
                 }
                 break;
             }
@@ -284,15 +285,6 @@ void Client::update(double elapsed_time)
                     m_drawing_shot_distance = 0.0f;
                 }
             }
-        }
-
-        /* decrease player hover when not over a tile */
-        if (m_map.get_tile_at(m_players[m_current_player]->x,
-                    m_players[m_current_player]->y).isNull())
-        {
-            m_players[m_current_player]->hover -= elapsed_time / 10;
-            if (m_players[m_current_player]->hover < 0)
-                m_players[m_current_player]->hover = 0;
         }
 
         m_player_dir_x = cos(m_players[m_current_player]->direction);
