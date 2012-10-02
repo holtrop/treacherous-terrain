@@ -75,6 +75,7 @@ bool Client::create_window(bool fullscreen, int width, int height)
             OPENGL_CONTEXT_MAJOR, OPENGL_CONTEXT_MINOR);
     m_window = new sf::Window(mode, "Treacherous Terrain", style, cs);
     m_window->setMouseCursorVisible(false);
+    grab_mouse(true);
     if (!initgl())
         return false;
     resize_window(m_window->getSize().x, m_window->getSize().y);
@@ -235,7 +236,7 @@ void Client::resize_window(int width, int height)
 {
     m_width = width;
     m_height = height;
-    sf::Mouse::setPosition(sf::Vector2i(m_width / 2, m_height / 2), *m_window);
+    recenter_cursor();
     glViewport(0, 0, width, height);
     float aspect = (float)width / (float)height;
     m_projection.load_identity();
