@@ -15,8 +15,12 @@ Client::Client()
 Client::~Client()
 {
     // Send disconnect message
+    bool connection_closed = false;
+    double close_timer;
     sf::Packet client_packet;
     sf::Uint8 packet_type = PLAYER_DISCONNECT;
+    Timer client_timer;
+    client_timer.Init();
     client_packet.clear();
     client_packet << packet_type;
     client_packet << current_player;
@@ -25,16 +29,52 @@ Client::~Client()
     // No time out needed here, since the
     // message will timeout after a couple of attempts
     // then exit anyway.
-    while(m_net_client->pendingMessages())
+    close_timer = Timer::GetTimeDouble();    
+    while(!connection_closed)
     {
+        // Time must be updated before any messages are sent
+        // Especially guaranteed messages, since the time needs to be
+        // non zero.
+        client_timer.Update();
+        
         m_net_client->Receive();
+        
+        while(m_net_client->getData(client_packet))
+        {
+            sf::Uint8 packet_type;
+            client_packet >> packet_type;
+            switch(packet_type)
+            {
+                case PLAYER_DISCONNECT:
+                {
+                    sf::Uint8 player_index;
+                    // This completely removes the player from the game
+                    // Deletes member from the player list
+                    client_packet >> player_index;
+                    if(player_index == current_player)
+                    {
+                        connection_closed = true;
+                    }
+                    break;
+                }
+            }
+        }
+
         m_net_client->Transmit();
 
         // temporary for now.  otherwise this thread consumed way too processing
         sf::sleep(sf::seconds(0.005)); // 5 milli-seconds
+        
+        // If the server does not respond within one second just close 
+        // and the server can deal with the problems.
+        if((Timer::GetTimeDouble() - close_timer) > 1.0)
+        {
+            connection_closed = true;
+        }
     }
 
     m_net_client->Destroy();
+    m_players.clear();
 }
 
 
@@ -120,15 +160,16 @@ void Client::update(double elapsed_time)
         {
             case PLAYER_CONNECT:
             {
-                sf::Uint32 players_address = 0u;
+                sf::Uint16 players_port = sf::Socket::AnyPort;
                 sf::Uint8 pindex;
                 std::string name = "";
                 client_packet >> pindex;
                 client_packet >> name;
-                client_packet >> players_address;
+                client_packet >> players_port;
                 // Should be a much better way of doing this.
                 // Perhaps generate a random number
-                if((sf::Uint32)((sf::Uint64)(&m_players)) == players_address)
+                if((name == current_player_name) &&
+                   (m_net_client->getLocalPort() == players_port))
                 {
                     current_player = pindex;
                 }
@@ -245,16 +286,16 @@ void Client::update(double elapsed_time)
     else if(!registered_player)
     {
         // Needs to be 32 bit so that the packet << overload will work.
-        sf::Uint32 players_address = (sf::Uint32)((sf::Uint64)(&m_players));
+        sf::Uint16 players_port = m_net_client->getLocalPort();
         sf::Uint8 packet_type = PLAYER_CONNECT;
         client_packet.clear();
         client_packet << packet_type;
         client_packet << current_player;
         client_packet << current_player_name;
-        // Send the address of the players map.  This will server as a unique
+        // Send the players port.  This will server as a unique
         // identifier and prevent users with the same name from controlling
         // each other.
-        client_packet << players_address;
+        client_packet << players_port;
         m_net_client->sendData(client_packet, true);
         registered_player = true;
     }

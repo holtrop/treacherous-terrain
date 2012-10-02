@@ -4,6 +4,7 @@
 #include <string>
 #include "Types.h"
 #include "SFML/Config.hpp"
+#include "Network.h"
 
 class Player
 {
@@ -19,6 +20,7 @@ class Player
         sf::Uint8 d_pressed;
         sf::Int32 rel_mouse_movement;
         bool updated;
+        Client_t* m_client;
 
         Player();
 };

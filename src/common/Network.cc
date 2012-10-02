@@ -33,6 +33,7 @@ void Network::Create(sf::Uint16 port, sf::IpAddress address )
     {
         tmpclient.addr = address;
         tmpclient.port = port;
+        tmpclient.disconnect = DISCONNECTED;
         numclients = addClients(&tmpclient, &current_client);
 
         net_socket.bind( sf::Socket::AnyPort );
@@ -48,10 +49,11 @@ void Network::Create(sf::Uint16 port, sf::IpAddress address )
 void Network::Destroy( void )
 {
     /* Clean and exit */
+    Reset();
     net_socket.unbind();
 }
 
-bool Network::getData(sf::Packet& p)
+bool Network::getData(sf::Packet& p,  sf::Uint8* sending_client)
 {
     bool rtn = false;
     sf::Uint16 curcl;
@@ -64,6 +66,10 @@ bool Network::getData(sf::Packet& p)
         {
             p = clients[curcl].receive.front();
             clients[curcl].receive.pop();
+            if(sending_client != NULL)
+            {
+                *sending_client = curcl;
+            }
             rtn = true;
             break;
         }
@@ -75,26 +81,33 @@ bool Network::getData(sf::Packet& p)
 
 bool Network::queueTransmitMessage(Network_Messages_T msg_type , sf::Packet p, Client_t * dest)
 {
-    sf::Packet packet;
-    sf::Uint8 type = (sf::Uint8)msg_type;
-    sf::Uint32 uid = UNIQUE_ID;
-    sf::Uint32 msg_id = getUniqueMessageId();
-    Transmit_Message_t* message = new Transmit_Message_t();
+    bool added_message_to_queue = false;
+    // Only queue a message if there are clients to receive it
+    if(numclients > 0)
+    {
+        sf::Packet packet;
+        sf::Uint8 type = (sf::Uint8)msg_type;
+        sf::Uint32 uid = UNIQUE_ID;
+        sf::Uint32 msg_id = getUniqueMessageId();
+        Transmit_Message_t* message = new Transmit_Message_t();
 
-    // Add this to the list of packets expecting a response
-    packet << uid;
-    packet << type;
-    packet << msg_id;
-    packet.append(p.getData(), p.getDataSize());
+        // Add this to the list of packets expecting a response
+        packet << uid;
+        packet << type;
+        packet << msg_id;
+        packet.append(p.getData(), p.getDataSize());
 
-    message->msg_type = msg_type;
-    message->Data = packet;
-    message->TimeStarted = 0.0;
-    message->dest = dest;
+        message->msg_type = msg_type;
+        message->Data = packet;
+        message->TimeStarted = 0.0;
+        message->dest = dest;
 
-    transmit_queue[msg_id] = message;
+        transmit_queue[msg_id] = message;
 
-    return true;
+        added_message_to_queue = true;
+    }
+
+    return added_message_to_queue;
 }
 
 bool Network::sendData(sf::Packet& p, bool guaranteed)
@@ -131,6 +144,8 @@ int Network::addClients(Client_t *client, sf::Uint16 *curcl)
     {
         clients[i].addr = client->addr;
         clients[i].port = client->port;
+        // Set that a client is now connected
+        clients[i].disconnect = CONNECTED;
         *curcl = i;
         i++;
     }
@@ -202,6 +217,11 @@ void Network::Receive()
                             if(MAX_NUM_CLIENTS > client_id)
                             {
                                 clients[client_id].ping = Timer::GetTimeDouble() - transmit_queue[msg_id]->TimeStarted;
+
+                                // Need to also register that a ping message was received.
+                                transmit_queue[msg_id]->Responses[&clients[client_id]] = Timer::GetTimeDouble();
+                                // Received a response, so reset send attempts.
+                                clients[client_id].num_send_attempts = 0u;
                             }
                             break;
                         }
@@ -212,6 +232,9 @@ void Network::Receive()
                             if(MAX_NUM_CLIENTS > client_id)
                             {
                                 transmit_queue[msg_id]->Responses[&clients[client_id]] = Timer::GetTimeDouble();
+
+                                // Received a response, so reset send attempts.
+                                clients[client_id].num_send_attempts = 0u;
                             }
                             break;
                         }
@@ -262,14 +285,29 @@ void Network::Transmit()
     // Broadcast the mesages to all clients
     sf::Uint32 msg_id = 0;
     static double ping_timer = Timer::GetTimeDouble();
+    double current_time = Timer::GetTimeDouble();
 
-    // Once per second, send ping messages ( just for fun )
-    if((Timer::GetTimeDouble() - ping_timer) > 1000.0)
+    // Every five seconds, send ping messages
+    // Note this time must be longer than the combined
+    // timeout and retry count, otherwise a client will never
+    // be removed.
+    if((current_time - ping_timer) > 1.0)
     {
-        ping_timer = Timer::GetTimeDouble();
+        ping_timer = current_time;
         sf::Packet response;
         response.clear();
         queueTransmitMessage(NETWORK_PING, response);
+    }
+
+    // Set any clients waiting to be removed to the
+    // do removal state.  This will get changed in the
+    // Transmit loop below if there are any pending messages
+    for(int client_ndx = 0; client_ndx < MAX_NUM_CLIENTS; client_ndx++)
+    {
+        if(clients[client_ndx].disconnect == WAIT_DISCONNECT)
+        {
+            clients[client_ndx].disconnect = DO_DISCONNECT;
+        }
     }
 
     // Send any pending messages
@@ -306,7 +344,7 @@ void Network::Transmit()
                         for ( std::map<Client_t*, double>::iterator iter = message->ClientTimeSent.begin(); iter != message->ClientTimeSent.end(); ++iter )
                         {
                             // Determine if enough time has elapsed to try and re-send
-                            if((curTime - iter->second) >= 0.5)
+                            if((curTime - iter->second) >= NETWORK_TIMEOUT)
                             {
                                 // Determine if a response was already received from this client
                                 if(message->Responses.find(iter->first) == message->Responses.end())
@@ -314,7 +352,25 @@ void Network::Transmit()
                                     // Resend the message to the client
                                     net_socket.send(message->Data, iter->first->addr, iter->first->port);
                                     message->ClientTimeSent[iter->first] = curTime;
+
+                                    // Keep track of the number of attempts
+                                    // if the number of attempts is exceeded, fake a receive message
+                                    // and set a timeout disconnect state
+                                    iter->first->num_send_attempts++;
+                                    if(MAX_NUM_SEND_ATTEMPTS < iter->first->num_send_attempts)
+                                    {
+                                        // Fake a receive message so that it will complete and be removed from the queue
+                                        message->Responses[iter->first] = Timer::GetTimeDouble();
+                                        iter->first->disconnect = TIMEOUT_DISCONNECT;
+                                    }
                                 }
+                            }
+
+                            // There are still pending messages for this client
+                            // Move back to wait state.
+                            if(iter->first->disconnect == DO_DISCONNECT)
+                            {
+                                iter->first->disconnect = WAIT_DISCONNECT;
                             }
                         }
                     }
@@ -356,6 +412,28 @@ void Network::Transmit()
         }
         msg_id++;
     }
+
+    // Any clients that still have the disconnect action
+    // are now safe to remove (i.e. no longer have pending messages)
+    for(int client_ndx = 0; client_ndx < MAX_NUM_CLIENTS; client_ndx++)
+    {
+        if(clients[client_ndx].disconnect == DO_DISCONNECT)
+        {
+            // Reset all client information.
+            clients[client_ndx].addr = sf::IpAddress();
+            clients[client_ndx].port = 0;
+            clients[client_ndx].disconnect = DISCONNECTED;
+            while(!clients[client_ndx].receive.empty())
+            {
+                clients[client_ndx].receive.pop();
+            }
+            // Decrement the number of connected clients.
+            if(numclients > 0)
+            {
+                numclients--;
+            }
+        }
+    }
 }
 
 int Network::getNumConnected( void )
@@ -370,6 +448,7 @@ void Network::Reset()
     {
         clients[i].addr = sf::IpAddress();
         clients[i].port = 0;
+        clients[i].disconnect = DISCONNECTED;
         while(!clients[i].receive.empty())
         {
             clients[i].receive.pop();
@@ -392,6 +471,28 @@ bool Network::pendingMessages()
 {
     return (transmit_queue.size() > 0);
 }
+
+sf::Uint16 Network::getLocalPort()
+{
+    return net_socket.getLocalPort();
+}
+
+void Network::disconnectClient(Client_t* player_client)
+{
+    clients[findClient(player_client)].disconnect = WAIT_DISCONNECT;
+}
+
+Client_t* Network::getClient( sf::Uint8 client_ndx )
+{
+    Client_t* tmp_client = NULL;
+    if(client_ndx < MAX_NUM_CLIENTS)
+    {
+        tmp_client = &clients[client_ndx];
+    }
+    return tmp_client;
+}
+
+
 
 sf::Packet& operator <<(sf::Packet& Packet, const Network_Messages_T& NMT)
 {

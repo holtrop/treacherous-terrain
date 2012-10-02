@@ -14,4 +14,5 @@ Player::Player()
     d_pressed = KEY_NOT_PRESSED;
     rel_mouse_movement = 0;
     updated = false;
+    m_client = NULL;
 }

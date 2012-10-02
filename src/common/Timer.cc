@@ -13,7 +13,7 @@ void Timer::Init(void)
     myClock.restart();
 
     // Set the time keepers to zero
-    myTotalElapsedTime = 0;
+    totalElapsedTime = 0;
 
     // Reset the game speed
     gameSpeed = 1.0f;
@@ -22,12 +22,11 @@ void Timer::Init(void)
 void Timer::Update(void)
 {
     // Record the time step
-    stepTime = ((myClock.getElapsedTime().asSeconds() / 1000.0f) * gameSpeed);
+    stepTime = (myClock.getElapsedTime().asSeconds() * gameSpeed);
     myClock.restart();
 
     // Add the time to the total time
-    myTotalElapsedTime += stepTime;
-    totalElapsedTime = myTotalElapsedTime;
+    totalElapsedTime += stepTime;
 
     // Calculate the game step
     curTimeStep = (sf::Uint32)(totalElapsedTime * STEPS_PER_SECOND);
@@ -45,7 +44,7 @@ float Timer::GetStepTime(void)
 
 sf::Uint32 Timer::GetTotalTime(void)
 {
-    return (sf::Uint32)(totalElapsedTime * 1000.0f);
+    return (sf::Uint32)(totalElapsedTime);
 }
 
 double Timer::GetTimeDouble(void)

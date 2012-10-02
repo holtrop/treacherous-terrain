@@ -36,9 +36,6 @@ private:
     float gameSpeed;
 
     // The total elapsed time since the start of the game
-    double myTotalElapsedTime;
-
-    // The total elapsed time since the start of the game
     static double totalElapsedTime;
 
     // The time that elapsed this step
