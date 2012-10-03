@@ -186,7 +186,8 @@ void Server::update( double elapsed_time )
         {
             /* decrease player hover when not over a tile */
             if((m_players[pindex]->hover > 0) &&
-               (m_map.get_tile_at(m_players[pindex]->x, m_players[pindex]->y).isNull()))
+              ((m_map.get_tile_at(m_players[pindex]->x, m_players[pindex]->y).isNull()) ||
+               (m_map.get_tile_at(m_players[pindex]->x, m_players[pindex]->y)->get_damage_state() == HexTile::DESTROYED)))
             {
                 m_players[pindex]->hover -= elapsed_time / 10;
                 if (m_players[pindex]->hover < 0)
@@ -206,16 +207,18 @@ void Server::update( double elapsed_time )
                     float player_dir_x = cos(m_players[pindex]->m_shot_direction);
                     float player_dir_y = sin(m_players[pindex]->m_shot_direction);
                     float tile_x = m_players[pindex]->m_shot_start_x + (player_dir_x * m_players[pindex]->m_shot_distance);
-                    float tile_y = m_players[pindex]->m_shot_start_y + (player_dir_y * m_players[pindex]->m_shot_distance); 
-                    if((!m_map.get_tile_at(tile_x, tile_y).isNull()) &&
-                       (m_map.get_tile_at(tile_x, tile_y)->get_damage_state() < HexTile::DESTROYED))
+                    float tile_y = m_players[pindex]->m_shot_start_y + (player_dir_y * m_players[pindex]->m_shot_distance);
+                    refptr<HexTile> p_tile = m_map.get_tile_at(tile_x, tile_y);
+                    if((!p_tile.isNull()) &&
+                       (p_tile->get_damage_state() < HexTile::DESTROYED))
                     {
                         // Send a message to all clients letting them know a tile was damaged
                         sf::Uint8 ptype = TILE_DAMAGED;
+                        
                         server_packet.clear();
                         server_packet << ptype;
-                        server_packet << tile_x;
-                        server_packet << tile_y;
+                        server_packet << p_tile->get_x();
+                        server_packet << p_tile->get_y();
                         m_net_server->sendData(server_packet, true);
                         m_map.get_tile_at(tile_x, tile_y)->shot();
                     }

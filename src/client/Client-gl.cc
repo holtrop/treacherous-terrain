@@ -8,8 +8,6 @@
 #include "ccfs.h"
 #include "HexTile.h"
 
-#include <iostream>
-
 using namespace std;
 
 #define LEN(arr) (sizeof(arr)/sizeof(arr[0]))
@@ -344,8 +342,8 @@ void Client::draw_map()
         for (int x = 0; x < width; x++)
         {
             if ((m_map.tile_present(x, y)) &&
-                (m_map.get_tile_at(x,y)->get_damage_state() == HexTile::UNDAMAGED))
-            {
+                (m_map.get_tile(x,y)->get_damage_state() < HexTile::DESTROYED))
+            {                
                 refptr<HexTile> tile = m_map.get_tile(x, y);
                 float cx = tile->get_x();
                 float cy = tile->get_y();
@@ -414,7 +412,7 @@ void Client::draw_overlay()
         for (int x = 0; x < width; x++)
         {
             if ((m_map.tile_present(x, y)) &&
-                (m_map.get_tile_at(x,y)->get_damage_state() == HexTile::UNDAMAGED))
+                (m_map.get_tile(x,y)->get_damage_state() < HexTile::DESTROYED))
             {
                 refptr<HexTile> tile = m_map.get_tile(x, y);
                 float cx = tile->get_x();
