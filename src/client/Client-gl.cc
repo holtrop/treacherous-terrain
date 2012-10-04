@@ -17,7 +17,6 @@ using namespace std;
 #define SKY_DIST 2000
 #define NUM_SKY_STEPS 9
 #define LAVA_SIZE 100
-#define SHOT_RING_WIDTH 10.0f
 #define NUM_SHOT_RING_STEPS 24
 
 /* points of a horizontal hexagon 1.0 units high */

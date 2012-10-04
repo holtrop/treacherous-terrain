@@ -359,7 +359,7 @@ void Client::update(double elapsed_time)
             client_packet.clear();
             client_packet << packet_type;
             client_packet << m_current_player;
-            client_packet << m_drawing_shot_distance;
+            client_packet << (float)(m_drawing_shot_distance + SHOT_RING_WIDTH / 2.0);
             m_net_client->sendData(client_packet, true);            
             m_shot_fired = false;
             m_drawing_shot_distance = 0;

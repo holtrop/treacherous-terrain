@@ -12,6 +12,8 @@
 #include "GLBuffer.h"
 #include "Network.h"
 
+#define SHOT_RING_WIDTH 10.0f
+
 class Client
 {
     public:
