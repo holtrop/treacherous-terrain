@@ -41,9 +41,15 @@ bool GLProgram::createv(const char *v_source, const char *f_source, va_list va)
     if (v_source == NULL || f_source == NULL)
         return false;
     if (!m_v_shader.create(GL_VERTEX_SHADER, v_source))
+    {
+        cerr << "Failed vertex shader source:" << endl << v_source << endl;
         return false;
+    }
     if (!m_f_shader.create(GL_FRAGMENT_SHADER, f_source))
+    {
+        cerr << "Failed fragment shader source:" << endl << f_source << endl;
         return false;
+    }
     m_id = glCreateProgram();
     if (m_id <= 0)
     {
