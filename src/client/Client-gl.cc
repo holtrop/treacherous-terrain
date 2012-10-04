@@ -142,6 +142,11 @@ bool Client::initgl()
         cerr << "Error loading hex-tile model" << endl;
         return false;
     }
+    if (!m_tile_damaged_obj.load("models/hex-tile-damaged.obj", load_file))
+    {
+        cerr << "Error loading hex-tile-damaged model" << endl;
+        return false;
+    }
     if (!m_overlay_hex_attributes.create(GL_ARRAY_BUFFER, GL_STATIC_DRAW,
                 overlay_hex_attributes, sizeof(overlay_hex_attributes)))
     {
@@ -327,14 +332,8 @@ void Client::draw_map()
 {
     m_obj_program.use();
     m_projection.to_uniform(m_obj_program.uniform("projection"));
-    m_tile_obj.bindBuffers();
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
-    int stride = m_tile_obj.getStride();
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
-            stride, (GLvoid *) m_tile_obj.getVertexOffset());
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
-            stride, (GLvoid *) m_tile_obj.getNormalOffset());
     const int width = m_map.get_width();
     const int height = m_map.get_height();
     for (int y = 0; y < height; y++)
@@ -345,15 +344,26 @@ void Client::draw_map()
                 (m_map.get_tile(x,y)->get_damage_state() < HexTile::DESTROYED))
             {                
                 refptr<HexTile> tile = m_map.get_tile(x, y);
+                WFObj & obj = (tile->get_damage_state() == HexTile::DAMAGED)
+                    ? m_tile_damaged_obj
+                    : m_tile_obj;
+                obj.bindBuffers();
+                int stride = obj.getStride();
+                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
+                        stride, (GLvoid *) obj.getVertexOffset());
+                glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
+                        stride, (GLvoid *) obj.getNormalOffset());
                 float cx = tile->get_x();
                 float cy = tile->get_y();
                 m_modelview.push();
                 m_modelview.translate(cx, cy, 0);
+                if (tile->get_damage_state() == HexTile::DAMAGED)
+                    m_modelview.translate(0, 0, -1);
                 m_modelview.scale(tile->get_size(), tile->get_size(), tile->get_size());
                 m_modelview.to_uniform(m_obj_program.uniform("modelview"));
                 for (map<string, WFObj::Material>::iterator it =
-                        m_tile_obj.getMaterials().begin();
-                        it != m_tile_obj.getMaterials().end();
+                        obj.getMaterials().begin();
+                        it != obj.getMaterials().end();
                         it++)
                 {
                     WFObj::Material & m = it->second;

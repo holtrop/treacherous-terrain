@@ -53,6 +53,7 @@ class Client
         GLProgram m_shot_ring_program;
         WFObj m_tank_obj;
         WFObj m_tile_obj;
+        WFObj m_tile_damaged_obj;
         GLMatrix m_projection;
         GLMatrix m_modelview;
         GLBuffer m_overlay_hex_attributes;
