@@ -40,7 +40,6 @@ Map::Map(int width, int height, float tile_size)
                     || (outer_out.point_within(y, x)
                         && !outer_in.point_within(y, x)))
             {
-                refptr<HexTile> get_tile_at(float x, float y);
                 ht = new HexTile(x, y, tile_size);
             }
 
