@@ -40,7 +40,7 @@ LINKFLAGS = []
 LIBS_client = []
 LIBS_server = []
 libs_to_copy = []
-SFML_PATH = '/c/apps/SFML' if platform == 'windows' else '/opt/SFML'
+SFML_PATH = '/c/apps/SFML-2.0-rc' if platform == 'windows' else '/opt/SFML'
 if 'SFML_PATH' in os.environ:
     SFML_PATH = os.environ['SFML_PATH']
 LIBPATH = ['%s/lib' % SFML_PATH]
