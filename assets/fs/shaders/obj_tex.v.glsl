@@ -15,5 +15,5 @@ void main(void)
     gl_Position = projection * modelview * vec4(pos, 1);
     pos_i = gl_Position.xyz;
     tex_coord_i = tex_coord;
-    normal_i = modelview * vec4(normal, 0);
+    normal_i = (modelview * vec4(normal, 0)).xyz;
 }
