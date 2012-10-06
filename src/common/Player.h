@@ -26,7 +26,7 @@ class Player
         double m_shot_start_y;
         double m_shot_direction;
         double m_shot_start_time;
-        
+        bool m_shot_allowed;
 
         Player();
 };

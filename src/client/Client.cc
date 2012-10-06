@@ -125,11 +125,20 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
             case sf::Event::MouseButtonPressed:                
                 if((event.mouseButton.button == sf::Mouse::Left) &&
                    (m_shot_fired == false) && // Don't allow shots ontop of each other
+                   // The server needs to allow player to shoot, so that
+                   // multiple shots cannot be fired at the same time
+                   (m_players[m_current_player]->m_shot_allowed) &&                         
                    (m_client_has_focus))
+                {
                     m_left_button_pressed = true;
+                }
                 break;
             case sf::Event::MouseButtonReleased:
                 if((event.mouseButton.button == sf::Mouse::Left) &&
+                   // Prevents a shot from being fired upon release
+                   // while another shot is currently being fired.
+                   (m_players[m_current_player]->m_shot_allowed) && 
+                   (m_left_button_pressed) &&
                    (m_client_has_focus))
                 {
                     m_drawing_shot = false;
@@ -253,12 +262,24 @@ void Client::update(double elapsed_time)
             {
                 float x;
                 float y;
+                sf::Uint8 pindex;
                 client_packet >> x;
                 client_packet >> y;
+                client_packet >> pindex;
+                // Damage the tile if it exists
                 if((!m_map.get_tile_at(x, y).isNull()))
                 {
                     m_map.get_tile_at(x, y)->shot();                    
                 }
+                // Allow player to shoot again
+                if(m_players.end() != m_players.find(pindex))
+                {
+                    m_players[pindex]->m_shot_allowed = true;
+                    if(pindex == m_current_player)
+                    {                         
+                        m_shot_fired = false;
+                    }
+                }                
                 break;
             }
             
@@ -360,9 +381,9 @@ void Client::update(double elapsed_time)
             client_packet << packet_type;
             client_packet << m_current_player;
             client_packet << (float)(m_drawing_shot_distance + SHOT_RING_WIDTH / 2.0);
-            m_net_client->sendData(client_packet, true);            
-            m_shot_fired = false;
+            m_net_client->sendData(client_packet, true);           
             m_drawing_shot_distance = 0;
+            m_players[m_current_player]->m_shot_allowed = false;
         }
     }
     else if(!registered_player)

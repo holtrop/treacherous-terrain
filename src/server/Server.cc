@@ -156,14 +156,20 @@ void Server::update( double elapsed_time )
                 float shot_distance;
                 server_packet >> pindex;
                 server_packet >> shot_distance;
-                m_players[pindex]->m_shot_distance = shot_distance;
-                m_players[pindex]->m_shot_start_time = Timer::GetTimeDouble();
-                
-                // Need to store off the current player location so that the
-                // correct tile can be calculated later.
-                m_players[pindex]->m_shot_start_x = m_players[pindex]->x;
-                m_players[pindex]->m_shot_start_y = m_players[pindex]->y;
-                m_players[pindex]->m_shot_direction = m_players[pindex]->direction;
+                // start the shot process if a player is allowed to shoot and exits
+                if((m_players.end() != m_players.find(pindex)) &&
+                   (m_players[pindex]->m_shot_allowed))
+                {
+                    m_players[pindex]->m_shot_distance = shot_distance;
+                    m_players[pindex]->m_shot_start_time = Timer::GetTimeDouble();
+                    m_players[pindex]->m_shot_allowed = false;
+                    
+                    // Need to store off the current player location so that the
+                    // correct tile can be calculated later.
+                    m_players[pindex]->m_shot_start_x = m_players[pindex]->x;
+                    m_players[pindex]->m_shot_start_y = m_players[pindex]->y;
+                    m_players[pindex]->m_shot_direction = m_players[pindex]->direction;
+                }
                 break;
             }
             
@@ -209,21 +215,27 @@ void Server::update( double elapsed_time )
                     float tile_x = m_players[pindex]->m_shot_start_x + (player_dir_x * m_players[pindex]->m_shot_distance);
                     float tile_y = m_players[pindex]->m_shot_start_y + (player_dir_y * m_players[pindex]->m_shot_distance);
                     refptr<HexTile> p_tile = m_map.get_tile_at(tile_x, tile_y);
-                    if((!p_tile.isNull()) &&
-                       (p_tile->get_damage_state() < HexTile::DESTROYED))
-                    {
-                        // Send a message to all clients letting them know a tile was damaged
-                        sf::Uint8 ptype = TILE_DAMAGED;
-                        
-                        server_packet.clear();
-                        server_packet << ptype;
-                        server_packet << p_tile->get_x();
-                        server_packet << p_tile->get_y();
-                        m_net_server->sendData(server_packet, true);
-                        m_map.get_tile_at(tile_x, tile_y)->shot();
-                    }
+                    // Send a message to all clients letting them know a tile was damaged
+                    // always send message since it will reenable the player shot ability.
+                    sf::Uint8 ptype = TILE_DAMAGED;                        
+                    server_packet.clear();
+                    server_packet << ptype;
+                    server_packet << tile_x;
+                    server_packet << tile_y;
+                    server_packet << pindex;  // Needed to alert the client that the player can now shoot again.
+                    m_net_server->sendData(server_packet, true);
+                    
+                    // Reset the shot logic
+                    m_players[pindex]->m_shot_allowed = true;                    
                     m_players[pindex]->m_shot_distance = 0.0;
                     m_players[pindex]->m_shot_start_time = 0.0;
+                    
+                    // If tile exists, damage the tile.
+                    if((!p_tile.isNull()) &&
+                       (p_tile->get_damage_state() < HexTile::DESTROYED))
+                    {                        
+                        p_tile->shot();
+                    }
                 }
             }
             

@@ -20,5 +20,6 @@ Player::Player()
     m_shot_start_x = 0.0;
     m_shot_start_y = 0.0;
     m_shot_direction = 0.0;
+    m_shot_allowed = true;
     
 }
