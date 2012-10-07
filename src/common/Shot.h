@@ -13,6 +13,8 @@ class Shot
         sf::Vector2f m_origin;
         sf::Vector2f m_direction;
         double m_speed;
+        double m_cos_a;
+        double m_sin_a;
         sf::Clock m_clock;
 };
 
