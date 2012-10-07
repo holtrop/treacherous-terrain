@@ -44,7 +44,7 @@ void Server::run( void )
 void Server::update( double elapsed_time )
 {
     static Player player_prev;
-    const double move_speed = 75.0;
+    const double move_speed = 50.0;
     sf::Packet server_packet;
     sf::Uint8 tmp_player_client;
 

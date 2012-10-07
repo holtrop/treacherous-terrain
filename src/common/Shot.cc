@@ -12,7 +12,7 @@ using namespace sf;
 /* GRAVITY can really be any arbitrary value that makes the shot's speed
  * feel right. Increasing the gravity will decrease the amount of time
  * it takes the shot to hit its target. */
-#define GRAVITY 100
+#define GRAVITY 150
 
 #define SHOT_ANGLE 30
 
