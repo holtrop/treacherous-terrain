@@ -9,43 +9,48 @@ using namespace sf;
  * starts at, which will depend on the tank model in use */
 #define INITIAL_SHOT_HEIGHT 10
 
-#define GRAVITY 9.8
+/* GRAVITY can really be any arbitrary value that makes the shot's speed
+ * feel right. Increasing the gravity will decrease the amount of time
+ * it takes the shot to hit its target. */
+#define GRAVITY 30
 
 /* We model the shot's position using a parametric equation based on time.
  * Assuming a constant 45° shot angle simplifies the equations.
- * x = Vt
- * y = H + Vt - gt²/2
- *   = (-g/2)t² + Vt + H
+ * x = vt
+ * y = h + vt - gt²/2
+ *   = (-g/2)t² + vt + h
  * where
- * V = shot speed
+ * v = shot speed
  * t = time
  * g = gravity
- * H = INITIAL_SHOT_HEIGHT
+ * h = INITIAL_SHOT_HEIGHT
  *
- * We want to figure out a speed that gets us to y = 0 at our desired time.
- * According to the quadratic formula (x = (-b ± sqrt(b²-4ac))/2a), y = 0 when
- * t = (-V ± sqrt(V² - 4(-g/2)H)) / 2(-g/2)
- * -tg = -V ± sqrt(V² + 2gH)
- * V - tg = ± sqrt(V² + 2gH)
- *
- * V - tg = sqrt(V² + 2gH)
- * (V - tg)² = V² + 2gH
- * V² - 2Vtg + t²g² = V² + 2gH
- * t²g² - 2Vtg = 2gH
- * -2Vtg = 2gH - t²g²
- * V = -(2gH - t²g²)/2tg
- * V = (t²g² - 2gH)/2tg
- *
- * So given the time to target (target_dist / PROJECTILE_VELOCITY) we can
- * solve for what the shot's speed should be.
+ * Given a target distance of d, we want to figure out a speed that makes
+ * (x, y) = (d, 0) a valid point on the trajectory.
+ * Then:
+ * d = vt
+ * 0 = (-g/2)t² + vt + h
+ * So:
+ * v = d/t
+ * 0 = (-g/2)t² + (d/t)t + h
+ * 0 = (-g/2)t² + d + h
+ * According to the quadratic formula (x = (-b ± sqrt(b² - 4ac))/2a),
+ * t = ±sqrt(-4(-g/2)(d+h)) / 2(-g/2)
+ * -tg = ±sqrt(2g(d+h))
+ * t²g² = 2g(d+h)
+ * t² = 2(d+h)/g
+ * t = sqrt(2(d+h)/g)
+ * Now that we know the time at which this point occurs, we can solve for
+ * the shot speed (v)
+ * v = d/t
+ * v = d / sqrt(2(d+h)/g)
  */
 Shot::Shot(const Vector2f & origin, double direction, double target_dist)
 {
     m_direction = Vector2f(cos(direction), sin(direction));
     m_origin = origin;
-    double t = target_dist / PROJECTILE_VELOCITY;
-    m_speed = (t * t * GRAVITY * GRAVITY - 2 * GRAVITY * INITIAL_SHOT_HEIGHT)
-        / (2 * t * GRAVITY);
+    m_speed = target_dist /
+        sqrt(2 * (target_dist + INITIAL_SHOT_HEIGHT) / GRAVITY);
 }
 
 Vector3f Shot::get_position()
