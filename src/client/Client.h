@@ -1,10 +1,13 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
+#include <map>
+#include <list>
 #include <SFML/Window.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include "refptr.h"
 #include "Map.h"
+#include "Shot.h"
 #include "Player.h"
 #include "GLProgram.h"
 #include "WFObj.h"
@@ -71,6 +74,7 @@ class Client
         bool m_drawing_shot;
         float m_drawing_shot_distance;
         bool m_shot_fired;
+        std::list< refptr<Shot> > m_shots;
 };
 
 #endif

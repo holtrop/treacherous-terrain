@@ -296,6 +296,7 @@ void Client::update(double elapsed_time)
     // TODO:  Clean this up and make it more robust
     if(m_players.size() > 0)
     {
+        refptr<Player> player = m_players[m_current_player];
         sf::Uint8 w_pressed = KEY_NOT_PRESSED;
         sf::Uint8 a_pressed = KEY_NOT_PRESSED;
         sf::Uint8 s_pressed = KEY_NOT_PRESSED;
@@ -345,15 +346,15 @@ void Client::update(double elapsed_time)
             }
         }
 
-        m_player_dir_x = cos(m_players[m_current_player]->direction);
-        m_player_dir_y = sin(m_players[m_current_player]->direction);
+        m_player_dir_x = cos(player->direction);
+        m_player_dir_y = sin(player->direction);
 
         // Send an update to the server if something has changed
-        if((m_players[m_current_player]->w_pressed != w_pressed) ||
-           (m_players[m_current_player]->a_pressed != a_pressed) ||
-           (m_players[m_current_player]->s_pressed != s_pressed) ||
-           (m_players[m_current_player]->d_pressed != d_pressed) ||
-           (m_players[m_current_player]->rel_mouse_movement !=  rel_mouse_movement))
+        if((player->w_pressed != w_pressed) ||
+           (player->a_pressed != a_pressed) ||
+           (player->s_pressed != s_pressed) ||
+           (player->d_pressed != d_pressed) ||
+           (player->rel_mouse_movement !=  rel_mouse_movement))
         {
             sf::Uint8 packet_type = PLAYER_UPDATE;
             client_packet.clear();
@@ -367,23 +368,29 @@ void Client::update(double elapsed_time)
 
             m_net_client->sendData(client_packet);
 
-            m_players[m_current_player]->w_pressed = w_pressed;
-            m_players[m_current_player]->a_pressed = a_pressed;
-            m_players[m_current_player]->s_pressed = s_pressed;
-            m_players[m_current_player]->d_pressed = d_pressed;
-            m_players[m_current_player]->rel_mouse_movement =  rel_mouse_movement;
+            player->w_pressed = w_pressed;
+            player->a_pressed = a_pressed;
+            player->s_pressed = s_pressed;
+            player->d_pressed = d_pressed;
+            player->rel_mouse_movement =  rel_mouse_movement;
         }
         
         if(m_shot_fired)
         {
+            float shot_distance = m_drawing_shot_distance + SHOT_RING_WIDTH / 2.0;
             sf::Uint8 packet_type = PLAYER_SHOT;
             client_packet.clear();
             client_packet << packet_type;
             client_packet << m_current_player;
-            client_packet << (float)(m_drawing_shot_distance + SHOT_RING_WIDTH / 2.0);
+            client_packet << shot_distance;
             m_net_client->sendData(client_packet, true);           
             m_drawing_shot_distance = 0;
-            m_players[m_current_player]->m_shot_allowed = false;
+            player->m_shot_allowed = false;
+            refptr<Shot> shot = new Shot(
+                    sf::Vector2f(player->x, player->y),
+                    player->direction,
+                    shot_distance);
+            m_shots.push_back(shot);
         }
     }
     else if(!registered_player)
