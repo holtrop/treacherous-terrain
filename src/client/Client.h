@@ -33,6 +33,7 @@ class Client
         void recenter_cursor();
         void draw_player(refptr<Player> player);
         void draw_map();
+        void draw_shot(refptr<Shot> shot);
         void draw_overlay();
         void draw_sky();
         void draw_lava();
@@ -67,6 +68,8 @@ class Client
         GLBuffer m_tex_quad_attributes;
         GLBuffer m_quad_attributes;
         GLBuffer m_shot_ring_attributes;
+        GLBuffer m_sphere_attributes;
+        GLBuffer m_sphere_indices;
         refptr<Network> m_net_client;
         bool m_client_has_focus;
         sf::Texture m_lava_texture;

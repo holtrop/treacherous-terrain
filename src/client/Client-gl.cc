@@ -18,6 +18,7 @@ using namespace std;
 #define NUM_SKY_STEPS 9
 #define LAVA_SIZE 100
 #define NUM_SHOT_RING_STEPS 24
+#define NUM_SPHERE_SLICES 12
 
 /* points of a horizontal hexagon 1.0 units high */
 static const float overlay_hex_attributes[][3] = {
@@ -219,6 +220,48 @@ bool Client::initgl()
         cerr << "Error creating shot ring attributes buffer" << endl;
         return false;
     }
+    vector<GLfloat> sphere_attributes(
+            (NUM_SPHERE_SLICES + 1) * (NUM_SPHERE_SLICES / 2 + 1) * (3 + 3));
+    for (int i = 0, idx = 0; i <= NUM_SPHERE_SLICES; i++)
+    {
+        for (int j = 0; j <= NUM_SPHERE_SLICES / 2; j++)
+        {
+            double z_angle = i * M_PI * 2.0 / NUM_SPHERE_SLICES;
+            GLfloat xo = cos(z_angle);
+            GLfloat yo = sin(z_angle);
+            double x_angle = j * M_PI * 2.0 / NUM_SPHERE_SLICES;
+            GLfloat r = sin(x_angle);
+            GLfloat x = r * xo;
+            GLfloat y = r * yo;
+            GLfloat z = -cos(x_angle);
+            sphere_attributes[idx++] = x;
+            sphere_attributes[idx++] = y;
+            sphere_attributes[idx++] = z;
+            sphere_attributes[idx++] = x;
+            sphere_attributes[idx++] = y;
+            sphere_attributes[idx++] = z;
+        }
+    }
+    if (!m_sphere_attributes.create(GL_ARRAY_BUFFER, GL_STATIC_DRAW,
+                &sphere_attributes[0],
+                sizeof(sphere_attributes[0]) * sphere_attributes.size()))
+    {
+        cerr << "Error creating sphere attributes buffer" << endl;
+        return false;
+    }
+    vector<GLushort> sphere_indices;
+    for (int i = 0; i <= NUM_SPHERE_SLICES / 2; i++)
+    {
+        sphere_indices.push_back(i);
+        sphere_indices.push_back(i + (NUM_SPHERE_SLICES / 2) + 1);
+    }
+    if (!m_sphere_indices.create(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW,
+                &sphere_indices[0],
+                sizeof(sphere_indices[0]) * sphere_indices.size()))
+    {
+        cerr << "Error creating sphere indices buffer" << endl;
+        return false;
+    }
     unsigned int lava_texture_length;
     const uint8_t *lava_texture = CFS.get_file("textures/lava.jpg",
             &lava_texture_length);
@@ -272,6 +315,11 @@ void Client::redraw()
         draw_sky();
         draw_lava();
         draw_shot_ring();
+
+        for (m_shots_iterator_t it = m_shots.begin(); it != m_shots.end(); it++)
+        {
+            draw_shot(*it);
+        }
 
         draw_overlay();
     }
@@ -390,6 +438,39 @@ void Client::draw_map()
             }
         }
     }
+}
+
+void Client::draw_shot(refptr<Shot> shot)
+{
+    m_obj_program.use();
+    m_sphere_attributes.bind();
+    m_sphere_indices.bind();
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
+            6 * sizeof(GLfloat), NULL);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
+            6 * sizeof(GLfloat), (void *)(3 * sizeof(GLfloat)));
+    m_modelview.push();
+    sf::Vector3f pos = shot->get_position();
+    m_modelview.translate(pos.x, pos.y, pos.z);
+    m_projection.to_uniform(m_obj_program.uniform("projection"));
+    m_modelview.to_uniform(m_obj_program.uniform("modelview"));
+    glUniform4f(m_obj_program.uniform("ambient"), 0, 0, 1, 1);
+    glUniform4f(m_obj_program.uniform("diffuse"), 0, 0, 1, 1);
+    glUniform4f(m_obj_program.uniform("specular"), 1, 1, 1, 1);
+    glUniform1f(m_obj_program.uniform("shininess"), 1);
+    for (int i = 0; i < NUM_SPHERE_SLICES; i++)
+    {
+        glDrawElementsBaseVertex(GL_TRIANGLE_STRIP,
+                2 * ((NUM_SPHERE_SLICES / 2) + 1),
+                GL_UNSIGNED_SHORT,
+                NULL,
+                i * ((NUM_SPHERE_SLICES / 2) + 1));
+    }
+    m_modelview.pop();
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
 }
 
 void Client::draw_overlay()
