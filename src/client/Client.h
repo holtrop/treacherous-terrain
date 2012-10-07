@@ -75,6 +75,7 @@ class Client
         float m_drawing_shot_distance;
         bool m_shot_fired;
         std::list< refptr<Shot> > m_shots;
+        typedef std::list< refptr<Shot> >::iterator m_shots_iterator_t;
 };
 
 #endif

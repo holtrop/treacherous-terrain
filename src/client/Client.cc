@@ -291,6 +291,15 @@ void Client::update(double elapsed_time)
         }
     }
 
+    for (m_shots_iterator_t it = m_shots.begin(); it != m_shots.end(); )
+    {
+        sf::Vector3f shot_position = (*it)->get_position();
+        if (shot_position.z <= 0.0)
+            it = m_shots.erase(it);
+        else
+            it++;
+    }
+
     // For now, we are going to do a very crude shove data into
     // packet from keyboard and mouse events.
     // TODO:  Clean this up and make it more robust
