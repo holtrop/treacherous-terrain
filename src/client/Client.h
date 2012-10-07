@@ -39,6 +39,7 @@ class Client
         void draw_lava();
         void draw_shot_ring();
         void draw_shot_ring_instance();
+        void create_shot();
 
         bool m_mouse_grabbed;
         double m_player_dir_x;

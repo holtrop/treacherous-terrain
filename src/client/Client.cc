@@ -36,16 +36,16 @@ Client::~Client()
     // No time out needed here, since the
     // message will timeout after a couple of attempts
     // then exit anyway.
-    close_timer = Timer::GetTimeDouble();    
+    close_timer = Timer::GetTimeDouble();
     while(!connection_closed)
     {
         // Time must be updated before any messages are sent
         // Especially guaranteed messages, since the time needs to be
         // non zero.
         client_timer.Update();
-        
+
         m_net_client->Receive();
-        
+
         while(m_net_client->getData(client_packet))
         {
             sf::Uint8 packet_type;
@@ -71,8 +71,8 @@ Client::~Client()
 
         // temporary for now.  otherwise this thread consumed way too processing
         sf::sleep(sf::seconds(0.005)); // 5 milli-seconds
-        
-        // If the server does not respond within one second just close 
+
+        // If the server does not respond within one second just close
         // and the server can deal with the problems.
         if((Timer::GetTimeDouble() - close_timer) > 1.0)
         {
@@ -122,12 +122,12 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
                     break;
                 }
                 break;
-            case sf::Event::MouseButtonPressed:                
+            case sf::Event::MouseButtonPressed:
                 if((event.mouseButton.button == sf::Mouse::Left) &&
                    (m_shot_fired == false) && // Don't allow shots ontop of each other
                    // The server needs to allow player to shoot, so that
                    // multiple shots cannot be fired at the same time
-                   (m_players[m_current_player]->m_shot_allowed) &&                         
+                   (m_players[m_current_player]->m_shot_allowed) &&
                    (m_client_has_focus))
                 {
                     m_left_button_pressed = true;
@@ -137,13 +137,14 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
                 if((event.mouseButton.button == sf::Mouse::Left) &&
                    // Prevents a shot from being fired upon release
                    // while another shot is currently being fired.
-                   (m_players[m_current_player]->m_shot_allowed) && 
+                   (m_players[m_current_player]->m_shot_allowed) &&
                    (m_left_button_pressed) &&
                    (m_client_has_focus))
                 {
                     m_drawing_shot = false;
                     m_left_button_pressed = false;
                     m_shot_fired = true;
+                    create_shot();
                 }
                 break;
             case sf::Event::Resized:
@@ -257,7 +258,7 @@ void Client::update(double elapsed_time)
                 // This will set a death flag in the player struct.
                 break;
             }
-            
+
             case TILE_DAMAGED:
             {
                 float x;
@@ -269,20 +270,20 @@ void Client::update(double elapsed_time)
                 // Damage the tile if it exists
                 if((!m_map.get_tile_at(x, y).isNull()))
                 {
-                    m_map.get_tile_at(x, y)->shot();                    
+                    m_map.get_tile_at(x, y)->shot();
                 }
                 // Allow player to shoot again
                 if(m_players.end() != m_players.find(pindex))
                 {
                     m_players[pindex]->m_shot_allowed = true;
                     if(pindex == m_current_player)
-                    {                         
+                    {
                         m_shot_fired = false;
                     }
-                }                
+                }
                 break;
             }
-            
+
             default :
             {
                 // Eat the packet
@@ -383,24 +384,6 @@ void Client::update(double elapsed_time)
             player->d_pressed = d_pressed;
             player->rel_mouse_movement =  rel_mouse_movement;
         }
-        
-        if(m_shot_fired)
-        {
-            float shot_distance = m_drawing_shot_distance + SHOT_RING_WIDTH / 2.0;
-            sf::Uint8 packet_type = PLAYER_SHOT;
-            client_packet.clear();
-            client_packet << packet_type;
-            client_packet << m_current_player;
-            client_packet << shot_distance;
-            m_net_client->sendData(client_packet, true);           
-            m_drawing_shot_distance = 0;
-            player->m_shot_allowed = false;
-            refptr<Shot> shot = new Shot(
-                    sf::Vector2f(player->x, player->y),
-                    player->direction,
-                    shot_distance);
-            m_shots.push_back(shot);
-        }
     }
     else if(!registered_player)
     {
@@ -423,4 +406,26 @@ void Client::update(double elapsed_time)
         // Do nothing.
     }
     m_net_client->Transmit();
+}
+
+void Client::create_shot()
+{
+    if (m_players.size() == 0)
+        return;
+    sf::Packet client_packet;
+    refptr<Player> player = m_players[m_current_player];
+    float shot_distance = m_drawing_shot_distance + SHOT_RING_WIDTH / 2.0;
+    sf::Uint8 packet_type = PLAYER_SHOT;
+    client_packet.clear();
+    client_packet << packet_type;
+    client_packet << m_current_player;
+    client_packet << shot_distance;
+    m_net_client->sendData(client_packet, true);
+    m_drawing_shot_distance = 0;
+    player->m_shot_allowed = false;
+    refptr<Shot> shot = new Shot(
+            sf::Vector2f(player->x, player->y),
+            player->direction,
+            shot_distance);
+    m_shots.push_back(shot);
 }
