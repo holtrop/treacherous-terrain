@@ -153,22 +153,31 @@ void Server::update( double elapsed_time )
             case PLAYER_SHOT:
             {
                 sf::Uint8 pindex;
-                float shot_distance;
+                double shot_distance;
                 server_packet >> pindex;
                 server_packet >> shot_distance;
                 // start the shot process if a player is allowed to shoot and exits
                 if((m_players.end() != m_players.find(pindex)) &&
                    (m_players[pindex]->m_shot_allowed))
-                {
-                    m_players[pindex]->m_shot_distance = shot_distance;
-                    m_players[pindex]->m_shot_start_time = Timer::GetTimeDouble();
-                    m_players[pindex]->m_shot_allowed = false;
+                {               
+                    // Perhaps sometime in the future, the shots will
+                    // be different colors depending on the player
+                    // or different power ups and what not.
+                    refptr<Shot> shot = new Shot(sf::Vector2f(m_players[pindex]->x, m_players[pindex]->y),
+                                                 m_players[pindex]->direction,
+                                                 shot_distance);
+                    m_players[pindex]->m_shot = shot;
+                    m_players[pindex]->m_shot_allowed = false;  
                     
-                    // Need to store off the current player location so that the
-                    // correct tile can be calculated later.
-                    m_players[pindex]->m_shot_start_x = m_players[pindex]->x;
-                    m_players[pindex]->m_shot_start_y = m_players[pindex]->y;
-                    m_players[pindex]->m_shot_direction = m_players[pindex]->direction;
+                    // Send a packet to all players that a shot has been fired
+                    server_packet.clear();
+                    server_packet << ptype;
+                    server_packet << pindex;
+                    server_packet << m_players[pindex]->x;
+                    server_packet << m_players[pindex]->y;
+                    server_packet << m_players[pindex]->direction;
+                    server_packet << shot_distance;                    
+                    m_net_server->sendData(server_packet, true);
                 }
                 break;
             }
@@ -202,33 +211,28 @@ void Server::update( double elapsed_time )
                 }
                 m_players[pindex]->updated = true;
             }
-            if((m_players[pindex]->m_shot_distance > 0.0) &&
-               (m_players[pindex]->m_shot_start_time > 0.0))
+            if(!(m_players[pindex]->m_shot.isNull()))
             {
                 // Calculate the distance the projectile travelled so far
-                float distance_so_far = 0.0;
-                distance_so_far = (Timer::GetTimeDouble() - m_players[pindex]->m_shot_start_time) * PROJECTILE_VELOCITY;
-                if(distance_so_far > m_players[pindex]->m_shot_distance)
+                // if the position is below tiles, take the current position
+                // and calculate the tile location.
+                sf::Vector3f shot_pos = m_players[pindex]->m_shot->get_position();
+                if(0.0 > shot_pos.z)
                 {
-                    float player_dir_x = cos(m_players[pindex]->m_shot_direction);
-                    float player_dir_y = sin(m_players[pindex]->m_shot_direction);
-                    float tile_x = m_players[pindex]->m_shot_start_x + (player_dir_x * m_players[pindex]->m_shot_distance);
-                    float tile_y = m_players[pindex]->m_shot_start_y + (player_dir_y * m_players[pindex]->m_shot_distance);
-                    refptr<HexTile> p_tile = m_map.get_tile_at(tile_x, tile_y);
+                    // Get tile at shot location.
+                    refptr<HexTile> p_tile = m_map.get_tile_at(shot_pos.x, shot_pos.y);
                     // Send a message to all clients letting them know a tile was damaged
                     // always send message since it will reenable the player shot ability.
                     sf::Uint8 ptype = TILE_DAMAGED;                        
                     server_packet.clear();
                     server_packet << ptype;
-                    server_packet << tile_x;
-                    server_packet << tile_y;
+                    server_packet << shot_pos.x;
+                    server_packet << shot_pos.y;
                     server_packet << pindex;  // Needed to alert the client that the player can now shoot again.
                     m_net_server->sendData(server_packet, true);
                     
                     // Reset the shot logic
-                    m_players[pindex]->m_shot_allowed = true;                    
-                    m_players[pindex]->m_shot_distance = 0.0;
-                    m_players[pindex]->m_shot_start_time = 0.0;
+                    m_players[pindex]->m_shot_allowed = true;
                     
                     // If tile exists, damage the tile.
                     if((!p_tile.isNull()) &&
@@ -236,6 +240,9 @@ void Server::update( double elapsed_time )
                     {                        
                         p_tile->shot();
                     }
+                    
+                    // Destroy the shot
+                    m_players[pindex]->m_shot = NULL;
                 }
             }
             

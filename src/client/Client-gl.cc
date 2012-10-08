@@ -309,18 +309,16 @@ void Client::redraw()
         for(std::map<sf::Uint8, refptr<Player> >::iterator piter = m_players.begin(); piter != m_players.end(); piter++)
         {
             draw_player(piter->second);
+            if(!(piter->second->m_shot.isNull()))
+            {
+                draw_shot(piter->second->m_shot);
+            }
         }
 
         draw_map();
         draw_sky();
         draw_lava();
         draw_shot_ring();
-
-        for (m_shots_iterator_t it = m_shots.begin(); it != m_shots.end(); it++)
-        {
-            draw_shot(*it);
-        }
-
         draw_overlay();
     }
 

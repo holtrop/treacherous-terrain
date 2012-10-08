@@ -258,6 +258,33 @@ void Client::update(double elapsed_time)
                 // This will set a death flag in the player struct.
                 break;
             }
+            
+            case PLAYER_SHOT:
+            {
+                sf::Uint8 pindex;
+                double x,y;
+                double direction;
+                double distance;
+                
+                client_packet >> pindex;
+                client_packet >> x;
+                client_packet >> y;
+                client_packet >> direction;
+                client_packet >> distance;
+                
+                // Ensure that the player who shot exists
+                if(m_players.end() != m_players.find(pindex))
+                {
+                    // Perhaps sometime in the future, the shots will
+                    // be different colors depending on the player
+                    // or different power ups and what not.
+                    refptr<Shot> shot = new Shot(sf::Vector2f(x, y),
+                                                 direction,
+                                                 distance);
+                    m_players[pindex]->m_shot = shot;
+                }
+                break;
+            }
 
             case TILE_DAMAGED:
             {
@@ -276,6 +303,7 @@ void Client::update(double elapsed_time)
                 if(m_players.end() != m_players.find(pindex))
                 {
                     m_players[pindex]->m_shot_allowed = true;
+                    m_players[pindex]->m_shot = NULL;
                     if(pindex == m_current_player)
                     {
                         m_shot_fired = false;
@@ -290,15 +318,6 @@ void Client::update(double elapsed_time)
                 break;
             }
         }
-    }
-
-    for (m_shots_iterator_t it = m_shots.begin(); it != m_shots.end(); )
-    {
-        sf::Vector3f shot_position = (*it)->get_position();
-        if (shot_position.z <= 0.0)
-            it = m_shots.erase(it);
-        else
-            it++;
     }
 
     // For now, we are going to do a very crude shove data into
@@ -413,8 +432,7 @@ void Client::create_shot()
     if (m_players.size() == 0)
         return;
     sf::Packet client_packet;
-    refptr<Player> player = m_players[m_current_player];
-    float shot_distance = m_drawing_shot_distance + SHOT_RING_WIDTH / 2.0;
+    double shot_distance = m_drawing_shot_distance + SHOT_RING_WIDTH / 2.0;
     sf::Uint8 packet_type = PLAYER_SHOT;
     client_packet.clear();
     client_packet << packet_type;
@@ -422,10 +440,5 @@ void Client::create_shot()
     client_packet << shot_distance;
     m_net_client->sendData(client_packet, true);
     m_drawing_shot_distance = 0;
-    player->m_shot_allowed = false;
-    refptr<Shot> shot = new Shot(
-            sf::Vector2f(player->x, player->y),
-            player->direction,
-            shot_distance);
-    m_shots.push_back(shot);
+    m_players[m_current_player]->m_shot_allowed = false;
 }

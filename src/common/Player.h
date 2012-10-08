@@ -5,6 +5,8 @@
 #include "Types.h"
 #include "SFML/Config.hpp"
 #include "Network.h"
+#include "Shot.h"
+#include "refptr.h"
 
 class Player
 {
@@ -21,12 +23,8 @@ class Player
         sf::Int32 rel_mouse_movement;
         bool updated;
         Client_t* m_client;
-        float m_shot_distance;
-        double m_shot_start_x;
-        double m_shot_start_y;
-        double m_shot_direction;
-        double m_shot_start_time;
         bool m_shot_allowed;
+        refptr<Shot> m_shot;
 
         Player();
 };

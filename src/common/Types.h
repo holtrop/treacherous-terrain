@@ -12,8 +12,4 @@
 
 #define TILE_DAMAGED        0xA1u
 
-// The speed of the projectile 
-#define PROJECTILE_VELOCITY       100.0
-
-
 #endif
