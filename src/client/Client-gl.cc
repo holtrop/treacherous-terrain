@@ -331,7 +331,15 @@ void Client::draw_player(refptr<Player> player)
     m_modelview.push();
     m_modelview.translate(player->x, player->y, 4);
     m_modelview.rotate(player->direction * 180.0 / M_PI, 0, 0, 1);
-    m_modelview.scale(2, 2, 2);
+    // If player is dead, make the model smaller
+    if(player->m_is_dead)
+    {
+        m_modelview.scale(1, 1, 1);        
+    }
+    else
+    {
+        m_modelview.scale(2, 2, 2);        
+    }
     m_tank_obj.bindBuffers();
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);

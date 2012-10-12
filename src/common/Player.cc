@@ -17,5 +17,5 @@ Player::Player()
     m_client = NULL;
     m_shot = NULL;
     m_shot_allowed = true;
-    
+    m_is_dead = false;
 }

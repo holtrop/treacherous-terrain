@@ -256,6 +256,14 @@ void Client::update(double elapsed_time)
             case PLAYER_DEATH:
             {
                 // This will set a death flag in the player struct.
+                sf::Uint8 player_index;
+                // This completely removes the player from the game
+                // Deletes member from the player list
+                client_packet >> player_index;
+                if(m_players.end() != m_players.find(player_index))
+                {
+                    m_players[player_index]->m_is_dead = true;
+                }
                 break;
             }
             

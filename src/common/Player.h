@@ -25,6 +25,7 @@ class Player
         Client_t* m_client;
         bool m_shot_allowed;
         refptr<Shot> m_shot;
+        bool m_is_dead;
 
         Player();
 };

@@ -207,10 +207,18 @@ void Server::update( double elapsed_time )
                 m_players[pindex]->hover -= elapsed_time / 10;
                 if (m_players[pindex]->hover < 0)
                 {
-                    m_players[pindex]->hover = 0;
+                    sf::Uint8 ptype = PLAYER_DEATH;
+                    m_players[pindex]->hover = 0;                    
+                    // Player is now dead.  
+                    m_players[pindex]->m_is_dead = true;    
+                    server_packet.clear();
+                    server_packet << ptype;
+                    server_packet << pindex;
+                    m_net_server->sendData(server_packet, true);
                 }
                 m_players[pindex]->updated = true;
             }
+
             if(!(m_players[pindex]->m_shot.isNull()))
             {
                 // Calculate the distance the projectile travelled so far
@@ -246,40 +254,44 @@ void Server::update( double elapsed_time )
                 }
             }
             
-            if (KEY_PRESSED == m_players[pindex]->a_pressed)
+            // If player is not dead, allow them to move.            
+            if(!m_players[pindex]->m_is_dead)
             {
-                double direction = m_players[pindex]->direction + M_PI_2;
-                m_players[pindex]->x += cos(direction) * move_speed * elapsed_time;
-                m_players[pindex]->y += sin(direction) * move_speed * elapsed_time;
-                m_players[pindex]->updated = true;
+                if (KEY_PRESSED == m_players[pindex]->a_pressed)
+                {
+                    double direction = m_players[pindex]->direction + M_PI_2;
+                    m_players[pindex]->x += cos(direction) * move_speed * elapsed_time;
+                    m_players[pindex]->y += sin(direction) * move_speed * elapsed_time;
+                    m_players[pindex]->updated = true;
+                }
+                if (KEY_PRESSED == m_players[pindex]->d_pressed)
+                {
+                    double direction = m_players[pindex]->direction - M_PI_2;
+                    m_players[pindex]->x += cos(direction) * move_speed * elapsed_time;
+                    m_players[pindex]->y += sin(direction) * move_speed * elapsed_time;
+                    m_players[pindex]->updated = true;
+                }
+                if (KEY_PRESSED == m_players[pindex]->w_pressed)
+                {
+                    double direction = m_players[pindex]->direction;
+                    m_players[pindex]->x += cos(direction) * move_speed * elapsed_time;
+                    m_players[pindex]->y += sin(direction) * move_speed * elapsed_time;
+                    m_players[pindex]->updated = true;
+                }
+                if (KEY_PRESSED == m_players[pindex]->s_pressed)
+                {
+                    double direction = m_players[pindex]->direction + M_PI;
+                    m_players[pindex]->x += cos(direction) * move_speed * elapsed_time;
+                    m_players[pindex]->y += sin(direction) * move_speed * elapsed_time;
+                    m_players[pindex]->updated = true;
+                }
+                if(0 != m_players[pindex]->rel_mouse_movement)
+                {
+                    m_players[pindex]->direction -= M_PI * 0.5 * m_players[pindex]->rel_mouse_movement / 1000;
+                    m_players[pindex]->updated = true;
+                }
             }
-            if (KEY_PRESSED == m_players[pindex]->d_pressed)
-            {
-                double direction = m_players[pindex]->direction - M_PI_2;
-                m_players[pindex]->x += cos(direction) * move_speed * elapsed_time;
-                m_players[pindex]->y += sin(direction) * move_speed * elapsed_time;
-                m_players[pindex]->updated = true;
-            }
-            if (KEY_PRESSED == m_players[pindex]->w_pressed)
-            {
-                double direction = m_players[pindex]->direction;
-                m_players[pindex]->x += cos(direction) * move_speed * elapsed_time;
-                m_players[pindex]->y += sin(direction) * move_speed * elapsed_time;
-                m_players[pindex]->updated = true;
-            }
-            if (KEY_PRESSED == m_players[pindex]->s_pressed)
-            {
-                double direction = m_players[pindex]->direction + M_PI;
-                m_players[pindex]->x += cos(direction) * move_speed * elapsed_time;
-                m_players[pindex]->y += sin(direction) * move_speed * elapsed_time;
-                m_players[pindex]->updated = true;
-            }
-            if(0 != m_players[pindex]->rel_mouse_movement)
-            {
-                m_players[pindex]->direction -= M_PI * 0.5 * m_players[pindex]->rel_mouse_movement / 1000;
-                m_players[pindex]->updated = true;
-            }
-
+            
             server_packet.clear();
 
             // Send the player update if there were changes
