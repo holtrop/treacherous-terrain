@@ -119,6 +119,7 @@ bool Client::initgl()
                 CFS.get_file("shaders/overlay_reload.f.glsl"),
                 "pos", 0, "normal", 1, NULL,
                 "projection", "modelview", NULL))
+        return false;
     if (!m_sky_program.create(
                 CFS.get_file("shaders/sky.v.glsl"),
                 CFS.get_file("shaders/sky.f.glsl"),
