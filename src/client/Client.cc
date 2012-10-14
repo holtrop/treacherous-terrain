@@ -93,7 +93,7 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
     if (!create_window(fullscreen, width, height))
         return;
     m_clock.restart();
-    sf::Mouse::setPosition(sf::Vector2i(m_width / 2, m_height / 2), *m_window);
+    recenter_cursor();
 
     double last_time = 0.0;
     while (m_window->isOpen())
@@ -177,15 +177,16 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
 
 void Client::recenter_cursor()
 {
-    sf::Mouse::setPosition(sf::Vector2i(m_width / 2, m_height / 2), *m_window);
+    if (m_mouse_grabbed)
+        sf::Mouse::setPosition(sf::Vector2i(m_width / 2, m_height / 2),
+                *m_window);
 }
 
 void Client::grab_mouse(bool grab)
 {
     m_mouse_grabbed = grab;
     m_window->setMouseCursorVisible(!grab);
-    if (grab)
-        recenter_cursor();
+    recenter_cursor();
 }
 
 void Client::update(double elapsed_time)
