@@ -128,6 +128,7 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
                    // The server needs to allow player to shoot, so that
                    // multiple shots cannot be fired at the same time
                    (m_players[m_current_player]->m_shot_allowed) &&
+                   (!m_players[m_current_player]->m_is_dead) &&
                    (m_client_has_focus))
                 {
                     m_left_button_pressed = true;
@@ -138,6 +139,7 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
                    // Prevents a shot from being fired upon release
                    // while another shot is currently being fired.
                    (m_players[m_current_player]->m_shot_allowed) &&
+                   (!m_players[m_current_player]->m_is_dead) &&
                    (m_left_button_pressed) &&
                    (m_client_has_focus))
                 {
