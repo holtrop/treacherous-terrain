@@ -57,11 +57,12 @@ Shot::Shot(const Vector2f & origin, double direction, double target_dist)
     m_speed = target_dist / m_cos_a /
         sqrt(2 * (target_dist * m_sin_a / m_cos_a + INITIAL_SHOT_HEIGHT) /
                 GRAVITY);
+    m_duration = target_dist / (m_speed * m_cos_a);
 }
 
 Vector3f Shot::get_position()
 {
-    float time = m_clock.getElapsedTime().asSeconds();
+    float time = get_elapsed_time();
     float horiz_dist = m_speed * m_cos_a * time;
     float z = INITIAL_SHOT_HEIGHT + m_speed * m_sin_a * time -
         GRAVITY * time * time / 2.0;
