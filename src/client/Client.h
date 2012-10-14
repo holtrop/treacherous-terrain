@@ -55,6 +55,7 @@ class Client
         GLProgram m_obj_program;
         GLProgram m_overlay_program;
         GLProgram m_overlay_hover_program;
+        GLProgram m_overlay_reload_program;
         GLProgram m_sky_program;
         GLProgram m_lava_program;
         GLProgram m_shot_ring_program;

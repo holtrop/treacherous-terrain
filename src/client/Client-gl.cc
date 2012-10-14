@@ -114,6 +114,11 @@ bool Client::initgl()
                 "pos", 0, "normal", 1, NULL,
                 "projection", "modelview", NULL))
         return false;
+    if (!m_overlay_reload_program.create(
+                CFS.get_file("shaders/obj.v.glsl"),
+                CFS.get_file("shaders/overlay_reload.f.glsl"),
+                "pos", 0, "normal", 1, NULL,
+                "projection", "modelview", NULL))
     if (!m_sky_program.create(
                 CFS.get_file("shaders/sky.v.glsl"),
                 CFS.get_file("shaders/sky.f.glsl"),
@@ -552,6 +557,25 @@ void Client::draw_overlay()
     modelview.to_uniform(m_overlay_hover_program.uniform("modelview"));
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
+    /* draw shot reload bar */
+    glViewport(m_width - 200, 50, 150, 25);
+    m_overlay_reload_program.use();
+    m_quad_attributes.bind();
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), NULL);
+    GLMatrix::Identity.to_uniform(
+            m_overlay_reload_program.uniform("projection"));
+    modelview.load_identity();
+    double reload_pct =
+        m_players[m_current_player]->m_shot.isNull()
+            ? 1.0
+            : (m_players[m_current_player]->m_shot->get_elapsed_time() /
+                    m_players[m_current_player]->m_shot->get_duration());
+    modelview.translate(reload_pct - 1, 0, 0);
+    modelview.scale(reload_pct * 2, 2.0, 1.0);
+    modelview.to_uniform(m_overlay_reload_program.uniform("modelview"));
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
     /* draw map border */
     glViewport(0, 0, m_width, m_height);
     m_overlay_program.use();
@@ -572,6 +596,14 @@ void Client::draw_overlay()
     modelview.load_identity();
     modelview.ortho(0, m_width, 0, m_height, -1, 1);
     modelview.translate(m_width - 200 + 150 / 2, 100 + 25 / 2, 0);
+    modelview.scale(150.1, 25.1, 1);
+    modelview.to_uniform(m_overlay_program.uniform("modelview"));
+    glDrawArrays(GL_LINE_LOOP, 0, 4);
+
+    /* draw shot reload bar border */
+    modelview.load_identity();
+    modelview.ortho(0, m_width, 0, m_height, -1, 1);
+    modelview.translate(m_width - 200 + 150 / 2, 50 + 25 / 2, 0);
     modelview.scale(150.1, 25.1, 1);
     modelview.to_uniform(m_overlay_program.uniform("modelview"));
     glDrawArrays(GL_LINE_LOOP, 0, 4);
