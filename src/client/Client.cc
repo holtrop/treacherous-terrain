@@ -8,8 +8,7 @@
 
 Client::Client()
 {
-    m_net_client = new Network();
-    m_net_client->Create(59243, "127.0.0.1"); // Just connect to local host for now - testing
+    connect(59243, "127.0.0.1"); // Just connect to local host for now - testing
     m_client_has_focus = true;
     m_players.clear();
     m_current_player = 0;
@@ -19,6 +18,18 @@ Client::Client()
 }
 
 Client::~Client()
+{
+    disconnect();
+    m_players.clear();
+}
+
+void Client::connect(int port, const char *host)
+{
+    m_net_client = new Network();
+    m_net_client->Create(port, host);
+}
+
+void Client::disconnect()
 {
     // Send disconnect message
     bool connection_closed = false;
@@ -72,9 +83,7 @@ Client::~Client()
     }
 
     m_net_client->Destroy();
-    m_players.clear();
 }
-
 
 void Client::run(bool fullscreen, int width, int height, std::string pname)
 {

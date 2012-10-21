@@ -24,6 +24,8 @@ class Client
         ~Client();
         void run(bool fullscreen, int width, int height, std::string pname);
     protected:
+        void connect(int port, const char *host);
+        void disconnect();
         bool create_window(bool fullscreen, int width, int height);
         bool initgl();
         void resize_window(int width, int height);
