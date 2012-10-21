@@ -81,6 +81,7 @@ class Network{
         static std::map<sf::Uint32, Transmit_Message_t*> transmit_queue;
         static char rxbuff[RECEIVE_BUFFER_SIZE];
         static sf::Clock message_timer;
+        static sf::Clock network_timer;
         static sf::Uint32 getUniqueMessageId();
         static int addClients(Client_t *client, sf::Uint16 *curcl);
         static int findClient(Client_t *client);

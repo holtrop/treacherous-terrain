@@ -1,5 +1,4 @@
 #include "Network.h"
-#include "Timer.h"
 #include <cstring>
 #include <cstdlib>
 #include <iostream>
@@ -11,6 +10,7 @@ char Network::rxbuff[RECEIVE_BUFFER_SIZE];
 std::map<sf::Uint32, Transmit_Message_t*>  Network::transmit_queue;
 Client_t Network::clients[MAX_NUM_CLIENTS];
 sf::Clock Network::message_timer;
+sf::Clock Network::network_timer;
 
 sf::Uint32 Network::getUniqueMessageId( void )
 {
@@ -216,10 +216,10 @@ void Network::Receive()
                         {
                             if(MAX_NUM_CLIENTS > client_id)
                             {
-                                clients[client_id].ping = Timer::GetTimeDouble() - transmit_queue[msg_id]->TimeStarted;
+                                clients[client_id].ping = network_timer.getElapsedTime().asSeconds() - transmit_queue[msg_id]->TimeStarted;
 
                                 // Need to also register that a ping message was received.
-                                transmit_queue[msg_id]->Responses[&clients[client_id]] = Timer::GetTimeDouble();
+                                transmit_queue[msg_id]->Responses[&clients[client_id]] = network_timer.getElapsedTime().asSeconds();
                                 // Received a response, so reset send attempts.
                                 clients[client_id].num_send_attempts = 0u;
                             }
@@ -231,7 +231,7 @@ void Network::Receive()
                             // Set that the message was acknowledged by the client
                             if(MAX_NUM_CLIENTS > client_id)
                             {
-                                transmit_queue[msg_id]->Responses[&clients[client_id]] = Timer::GetTimeDouble();
+                                transmit_queue[msg_id]->Responses[&clients[client_id]] = network_timer.getElapsedTime().asSeconds();
 
                                 // Received a response, so reset send attempts.
                                 clients[client_id].num_send_attempts = 0u;
@@ -284,8 +284,8 @@ void Network::Transmit()
 {
     // Broadcast the mesages to all clients
     sf::Uint32 msg_id = 0;
-    static double ping_timer = Timer::GetTimeDouble();
-    double current_time = Timer::GetTimeDouble();
+    static double ping_timer = network_timer.getElapsedTime().asSeconds();
+    double current_time = network_timer.getElapsedTime().asSeconds();
 
     // Every five seconds, send ping messages
     // Note this time must be longer than the combined
@@ -313,7 +313,7 @@ void Network::Transmit()
     // Send any pending messages
     while(transmit_queue.find(msg_id) != transmit_queue.end())
     {
-        double curTime = Timer::GetTimeDouble();
+        double curTime = network_timer.getElapsedTime().asSeconds();
         Transmit_Message_t * message = transmit_queue[msg_id];
         switch(message->msg_type)
         {
@@ -324,7 +324,7 @@ void Network::Transmit()
                 // send the message and update the sent times.
                 if(0.0 == message->TimeStarted)
                 {
-                    message->TimeStarted = Timer::GetTimeDouble();
+                    message->TimeStarted = network_timer.getElapsedTime().asSeconds();
                     for(int i = 0; i < MAX_NUM_CLIENTS; i++)
                     {
                         if((clients[i].addr != sf::IpAddress::None) && (clients[i].port != 0))
@@ -360,7 +360,7 @@ void Network::Transmit()
                                     if(MAX_NUM_SEND_ATTEMPTS < iter->first->num_send_attempts)
                                     {
                                         // Fake a receive message so that it will complete and be removed from the queue
-                                        message->Responses[iter->first] = Timer::GetTimeDouble();
+                                        message->Responses[iter->first] = network_timer.getElapsedTime().asSeconds();
                                         iter->first->disconnect = TIMEOUT_DISCONNECT;
                                     }
                                 }

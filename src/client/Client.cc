@@ -1,7 +1,6 @@
 #include <math.h>
 #include "Client.h"
 #include "Types.h"
-#include "Timer.h"
 
 /* TODO: this should be moved to common somewhere */
 #define MAX_SHOT_DISTANCE 250.0
@@ -23,11 +22,9 @@ Client::~Client()
 {
     // Send disconnect message
     bool connection_closed = false;
-    double close_timer;
     sf::Packet client_packet;
     sf::Uint8 packet_type = PLAYER_DISCONNECT;
-    Timer client_timer;
-    client_timer.Init();
+    sf::Clock timeout_clock;
     client_packet.clear();
     client_packet << packet_type;
     client_packet << m_current_player;
@@ -36,14 +33,8 @@ Client::~Client()
     // No time out needed here, since the
     // message will timeout after a couple of attempts
     // then exit anyway.
-    close_timer = Timer::GetTimeDouble();
     while(!connection_closed)
     {
-        // Time must be updated before any messages are sent
-        // Especially guaranteed messages, since the time needs to be
-        // non zero.
-        client_timer.Update();
-
         m_net_client->Receive();
 
         while(m_net_client->getData(client_packet))
@@ -74,7 +65,7 @@ Client::~Client()
 
         // If the server does not respond within one second just close
         // and the server can deal with the problems.
-        if((Timer::GetTimeDouble() - close_timer) > 1.0)
+        if(timeout_clock.getElapsedTime().asSeconds() > 1.0)
         {
             connection_closed = true;
         }
@@ -87,8 +78,6 @@ Client::~Client()
 
 void Client::run(bool fullscreen, int width, int height, std::string pname)
 {
-    Timer client_timer;
-    client_timer.Init();
     m_current_player_name = pname;
     if (!create_window(fullscreen, width, height))
         return;
@@ -162,11 +151,6 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
                 break;
             }
         }
-
-        // Time must be updated before any messages are sent
-        // Especially guaranteed messages, since the time needs to be
-        // non zero.
-        client_timer.Update();
 
         update(elapsed_time);
         redraw();

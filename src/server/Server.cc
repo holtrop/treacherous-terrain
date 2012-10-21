@@ -1,7 +1,6 @@
 #include "Server.h"
 #include "Types.h"
 #include <math.h>
-#include "Timer.h"
 
 Server::Server(sf::Uint16 port)
 {
@@ -20,17 +19,10 @@ void Server::run( void )
     double current_time;
     double elapsed_time;
     double last_time = 0.0;
-    Timer server_timer;
-    server_timer.Init();
     while(1)
     {
         current_time = m_clock.getElapsedTime().asSeconds();
         elapsed_time = current_time - last_time;
-
-        // Time must be updated before any messages are sent
-        // Especially guaranteed messages, since the time needs to be
-        // non zero.
-        server_timer.Update();
 
         update( elapsed_time );
         last_time = current_time;
