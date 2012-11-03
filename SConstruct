@@ -41,12 +41,15 @@ LIBS_client = []
 LIBS_server = []
 libs_to_copy = []
 SFML_PATH = '/c/apps/SFML-2.0-rc' if platform == 'windows' else '/opt/SFML'
+SFGUI_PATH = '/c/apps/SFGUI' if platform == 'windows' else '/opt/SFGUI'
 if 'SFML_PATH' in os.environ:
     SFML_PATH = os.environ['SFML_PATH']
-LIBPATH = ['%s/lib' % SFML_PATH]
+if 'SFGUI_PATH' in os.environ:
+    SFGUI_PATH = os.environ['SFGUI_PATH']
+LIBPATH = ['%s/lib' % SFGUI_PATH, '%s/lib' % SFML_PATH]
 CPPFLAGS = []
 CPPFLAGS += map(lambda x: '-I' + x, find_dirs_under('src/common'))
-CPPFLAGS += ['-I%s/include' % SFML_PATH]
+CPPFLAGS += ['-I%s/include' % SFGUI_PATH, '-I%s/include' % SFML_PATH]
 CPPFLAGS_client = ['-DGL_INCLUDE_FILE=\\"GL3/gl3w.h\\"']
 CPPFLAGS_client += map(lambda x: '-I' + x, find_dirs_under('src/client'))
 CPPFLAGS_server = map(lambda x: '-I' + x, find_dirs_under('src/server'))
@@ -63,9 +66,10 @@ if platform == 'windows':
     libs_to_copy.append('%s/libgcc_s_dw2-1.dll' % MINGW_DIR)
     CPPFLAGS.append('-DSFML_STATIC')
 else:
-    LIBS_client += ['sfml-network', 'sfml-window', 'sfml-graphics',
+    LIBS_client += ['sfgui', 'sfml-network', 'sfml-window', 'sfml-graphics',
             'sfml-system', 'GL', 'GLU']
     LIBS_server += ['sfml-system','sfml-network']
+    LINKFLAGS.append('-Wl,-R%s/lib' % SFGUI_PATH)
     LINKFLAGS.append('-Wl,-R%s/lib' % SFML_PATH)
 
 # our sources
