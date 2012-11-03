@@ -102,7 +102,8 @@ void Client::run_main_menu()
     m_window->setMouseCursorVisible(true);
     sfg::SFGUI sfgui;
     sfg::Label::Ptr label = sfg::Label::Create("Label Test");
-    sfg::Window::Ptr window(sfg::Window::Create());
+    sfg::Window::Ptr window(sfg::Window::Create(sfg::Window::TITLEBAR |
+                sfg::Window::BACKGROUND));
     window->SetTitle("SFGUI window");
     window->Add(label);
     sfg::Desktop desktop;
