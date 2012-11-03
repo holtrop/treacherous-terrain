@@ -97,20 +97,37 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
     run_main_menu();
 }
 
+void Client::play_single_player_game_button_clicked()
+{
+    m_menu_action = MAIN_MENU_SINGLE;
+}
+
+void Client::exit_button_clicked()
+{
+    m_menu_action = MAIN_MENU_EXIT;
+}
+
 void Client::run_main_menu()
 {
     m_window->setMouseCursorVisible(true);
     m_window->resetGLStates();
 
+    m_menu_action = MAIN_MENU_NONE;
     sfg::SFGUI sfgui;
     sfg::Box::Ptr box = sfg::Box::Create(sfg::Box::VERTICAL, 10.0f);
     sfg::Button::Ptr btn_singleplayer =
         sfg::Button::Create("Play Single Player Game");
+    btn_singleplayer->GetSignal(sfg::Widget::OnLeftClick).Connect(
+            &Client::play_single_player_game_button_clicked, this);
     sfg::Button::Ptr btn_hostgame = sfg::Button::Create("Host a Network Game");
     sfg::Button::Ptr btn_joingame = sfg::Button::Create("Join a Network Game");
+    sfg::Button::Ptr btn_exit = sfg::Button::Create("Exit");
+    btn_exit->GetSignal(sfg::Widget::OnLeftClick).Connect(
+            &Client::exit_button_clicked, this);
     box->Pack(btn_singleplayer);
     box->Pack(btn_hostgame);
     box->Pack(btn_joingame);
+    box->Pack(btn_exit);
     sfg::Window::Ptr gui_window(sfg::Window::Create(sfg::Window::TITLEBAR |
                 sfg::Window::BACKGROUND));
     gui_window->SetTitle("Treacherous Terrain");
@@ -124,7 +141,7 @@ void Client::run_main_menu()
     sf::Event event;
 
     bool in_menu = true;
-    while (in_menu)
+    while (in_menu && m_window->isOpen())
     {
         while (m_window->pollEvent(event))
         {
@@ -140,7 +157,7 @@ void Client::run_main_menu()
                 switch (event.key.code)
                 {
                 case sf::Keyboard::Escape:
-                    in_menu = false;
+                    m_menu_action = MAIN_MENU_EXIT;
                     break;
                 default:
                     break;
@@ -162,16 +179,36 @@ void Client::run_main_menu()
         m_window->clear();
         sfgui.Display(*m_window);
         m_window->display();
-    }
 
-    run_client();
+        if (m_menu_action != MAIN_MENU_NONE)
+        {
+            switch (m_menu_action)
+            {
+                case MAIN_MENU_SINGLE:
+                    start_server();
+                    run_client();
+                    m_window->resetGLStates();
+                    break;
+                case MAIN_MENU_EXIT:
+                    in_menu = false;
+                    break;
+            }
+            m_menu_action = MAIN_MENU_NONE;
+        }
+    }
+}
+
+void Client::start_server()
+{
+    /* TODO */
 }
 
 void Client::run_client()
 {
     m_window->setMouseCursorVisible(false);
     double last_time = 0.0;
-    while (m_window->isOpen())
+    bool in_game = true;
+    while (in_game && m_window->isOpen())
     {
         double current_time = m_clock.getElapsedTime().asSeconds();
         double elapsed_time = current_time - last_time;
@@ -188,7 +225,7 @@ void Client::run_client()
                 switch (event.key.code)
                 {
                 case sf::Keyboard::Escape:
-                    m_window->close();
+                    in_game = false;
                     break;
                 case sf::Keyboard::F1:
                     grab_mouse(!m_mouse_grabbed);

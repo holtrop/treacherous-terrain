@@ -17,6 +17,15 @@
 
 #define SHOT_RING_WIDTH 10.0f
 
+enum
+{
+    MAIN_MENU_NONE,
+    MAIN_MENU_SINGLE,
+    MAIN_MENU_HOST,
+    MAIN_MENU_JOIN,
+    MAIN_MENU_EXIT
+};
+
 class Client
 {
     public:
@@ -25,6 +34,7 @@ class Client
         void run(bool fullscreen, int width, int height, std::string pname);
     protected:
         void run_main_menu();
+        void start_server();
         void run_client();
         void connect(int port, const char *host);
         void disconnect();
@@ -45,6 +55,11 @@ class Client
         void draw_shot_ring_instance();
         void create_shot();
 
+        /* GUI callbacks */
+        void play_single_player_game_button_clicked();
+        void exit_button_clicked();
+
+        int m_menu_action;
         bool m_mouse_grabbed;
         double m_player_dir_x;
         double m_player_dir_y;
