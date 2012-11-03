@@ -94,7 +94,6 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
     m_clock.restart();
     recenter_cursor();
 
-#if 0
     sfg::SFGUI sfgui;
     sfg::Label::Ptr label = sfg::Label::Create("Label Test");
     sfg::Window::Ptr window(sfg::Window::Create());
@@ -102,18 +101,35 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
     window->Add(label);
     sfg::Desktop desktop;
     desktop.Add(window);
+    m_window->resetGLStates();
 
     sf::Event event;
 
-    while (m_window->isOpen())
+    bool in_menu = true;
+    while (in_menu)
     {
         while (m_window->pollEvent(event))
         {
             desktop.HandleEvent(event);
 
-            if (event.type == sf::Event::Closed)
+            switch (event.type)
             {
+            case sf::Event::Closed:
                 m_window->close();
+                in_menu = false;
+                break;
+            case sf::Event::KeyPressed:
+                switch (event.key.code)
+                {
+                case sf::Keyboard::Escape:
+                    in_menu = false;
+                    break;
+                default:
+                    break;
+                }
+                break;
+            default:
+                break;
             }
         }
 
@@ -122,9 +138,7 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
         sfgui.Display(*m_window);
         m_window->display();
     }
-#endif
 
-//#if 0
     double last_time = 0.0;
     while (m_window->isOpen())
     {
@@ -200,7 +214,6 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
         // temporary for now.  otherwise this thread consumed way too processing
         sf::sleep(sf::seconds(0.005)); // 5 milli-seconds
     }
-//#endif
 }
 
 void Client::recenter_cursor()
