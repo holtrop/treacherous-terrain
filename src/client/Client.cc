@@ -1,6 +1,7 @@
 #include <math.h>
 #include "Client.h"
 #include "Types.h"
+#include <SFGUI/SFGUI.hpp>
 
 /* TODO: this should be moved to common somewhere */
 #define MAX_SHOT_DISTANCE 250.0
@@ -93,6 +94,37 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
     m_clock.restart();
     recenter_cursor();
 
+#if 0
+    sfg::SFGUI sfgui;
+    sfg::Label::Ptr label = sfg::Label::Create("Label Test");
+    sfg::Window::Ptr window(sfg::Window::Create());
+    window->SetTitle("SFGUI window");
+    window->Add(label);
+    sfg::Desktop desktop;
+    desktop.Add(window);
+
+    sf::Event event;
+
+    while (m_window->isOpen())
+    {
+        while (m_window->pollEvent(event))
+        {
+            desktop.HandleEvent(event);
+
+            if (event.type == sf::Event::Closed)
+            {
+                m_window->close();
+            }
+        }
+
+        desktop.Update(m_clock.restart().asSeconds());
+        m_window->clear();
+        sfgui.Display(*m_window);
+        m_window->display();
+    }
+#endif
+
+//#if 0
     double last_time = 0.0;
     while (m_window->isOpen())
     {
@@ -168,6 +200,7 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
         // temporary for now.  otherwise this thread consumed way too processing
         sf::sleep(sf::seconds(0.005)); // 5 milli-seconds
     }
+//#endif
 }
 
 void Client::recenter_cursor()

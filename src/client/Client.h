@@ -4,7 +4,7 @@
 #include <map>
 #include <list>
 #include <SFML/Window.hpp>
-#include <SFML/Graphics/Texture.hpp>
+#include <SFML/Graphics.hpp>
 #include "refptr.h"
 #include "Map.h"
 #include "Shot.h"
@@ -46,7 +46,7 @@ class Client
         bool m_mouse_grabbed;
         double m_player_dir_x;
         double m_player_dir_y;
-        refptr<sf::Window> m_window;
+        refptr<sf::RenderWindow> m_window;
         sf::Clock m_clock;
         Map m_map;
         sf::Uint8 m_current_player;
