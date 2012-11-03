@@ -138,6 +138,13 @@ void Client::run_main_menu()
                     break;
                 }
                 break;
+            case sf::Event::Resized:
+                m_width = event.size.width;
+                m_height = event.size.height;
+                window->SetPosition(sf::Vector2f(
+                            m_width / 2 - window->GetAllocation().width / 2,
+                            m_height / 2 - window->GetAllocation().height / 2));
+                break;
             default:
                 break;
             }
