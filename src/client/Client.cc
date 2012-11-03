@@ -106,6 +106,9 @@ void Client::run_main_menu()
                 sfg::Window::BACKGROUND));
     window->SetTitle("SFGUI window");
     window->Add(label);
+    window->SetPosition(sf::Vector2f(
+                m_width / 2 - window->GetAllocation().width / 2,
+                m_height / 2 - window->GetAllocation().height / 2));
     sfg::Desktop desktop;
     desktop.Add(window);
     m_window->resetGLStates();
