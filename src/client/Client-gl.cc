@@ -74,7 +74,6 @@ bool Client::create_window(bool fullscreen, int width, int height)
     sf::ContextSettings cs = sf::ContextSettings(0, 0, 0,
             OPENGL_CONTEXT_MAJOR, OPENGL_CONTEXT_MINOR);
     m_window = new sf::RenderWindow(mode, "Treacherous Terrain", style, cs);
-    m_window->setMouseCursorVisible(false);
     grab_mouse(true);
     if (!initgl())
         return false;

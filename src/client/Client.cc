@@ -94,6 +94,12 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
     m_clock.restart();
     recenter_cursor();
 
+    run_main_menu();
+}
+
+void Client::run_main_menu()
+{
+    m_window->setMouseCursorVisible(true);
     sfg::SFGUI sfgui;
     sfg::Label::Ptr label = sfg::Label::Create("Label Test");
     sfg::Window::Ptr window(sfg::Window::Create());
@@ -139,6 +145,12 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
         m_window->display();
     }
 
+    run_client();
+}
+
+void Client::run_client()
+{
+    m_window->setMouseCursorVisible(false);
     double last_time = 0.0;
     while (m_window->isOpen())
     {
