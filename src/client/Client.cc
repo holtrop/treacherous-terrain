@@ -100,18 +100,26 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
 void Client::run_main_menu()
 {
     m_window->setMouseCursorVisible(true);
-    sfg::SFGUI sfgui;
-    sfg::Label::Ptr label = sfg::Label::Create("Label Test");
-    sfg::Window::Ptr window(sfg::Window::Create(sfg::Window::TITLEBAR |
-                sfg::Window::BACKGROUND));
-    window->SetTitle("SFGUI window");
-    window->Add(label);
-    window->SetPosition(sf::Vector2f(
-                m_width / 2 - window->GetAllocation().width / 2,
-                m_height / 2 - window->GetAllocation().height / 2));
-    sfg::Desktop desktop;
-    desktop.Add(window);
     m_window->resetGLStates();
+
+    sfg::SFGUI sfgui;
+    sfg::Box::Ptr box = sfg::Box::Create(sfg::Box::VERTICAL, 10.0f);
+    sfg::Button::Ptr btn_singleplayer =
+        sfg::Button::Create("Play Single Player Game");
+    sfg::Button::Ptr btn_hostgame = sfg::Button::Create("Host a Network Game");
+    sfg::Button::Ptr btn_joingame = sfg::Button::Create("Join a Network Game");
+    box->Pack(btn_singleplayer);
+    box->Pack(btn_hostgame);
+    box->Pack(btn_joingame);
+    sfg::Window::Ptr gui_window(sfg::Window::Create(sfg::Window::TITLEBAR |
+                sfg::Window::BACKGROUND));
+    gui_window->SetTitle("Treacherous Terrain");
+    gui_window->Add(box);
+    gui_window->SetPosition(sf::Vector2f(
+                m_width / 2 - gui_window->GetAllocation().width / 2,
+                m_height / 2 - gui_window->GetAllocation().height / 2));
+    sfg::Desktop desktop;
+    desktop.Add(gui_window);
 
     sf::Event event;
 
@@ -141,9 +149,9 @@ void Client::run_main_menu()
             case sf::Event::Resized:
                 m_width = event.size.width;
                 m_height = event.size.height;
-                window->SetPosition(sf::Vector2f(
-                            m_width / 2 - window->GetAllocation().width / 2,
-                            m_height / 2 - window->GetAllocation().height / 2));
+                gui_window->SetPosition(sf::Vector2f(
+                            m_width / 2 - gui_window->GetAllocation().width / 2,
+                            m_height / 2 - gui_window->GetAllocation().height / 2));
                 break;
             default:
                 break;
