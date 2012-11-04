@@ -1,7 +1,6 @@
 #include <math.h>
 #include "Client.h"
 #include "Types.h"
-#include <SFGUI/SFGUI.hpp>
 
 /* TODO: this should be moved to common somewhere */
 #define MAX_SHOT_DISTANCE 250.0
@@ -94,7 +93,22 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
     m_clock.restart();
     recenter_cursor();
 
-    run_main_menu();
+    bool in_game = true;
+    while (in_game)
+    {
+        run_main_menu();
+        switch (m_menu_action)
+        {
+        case MAIN_MENU_SINGLE:
+            start_server();
+            run_client();
+            stop_server();
+            break;
+        case MAIN_MENU_EXIT:
+            in_game = false;
+            break;
+        }
+    }
 }
 
 void Client::play_single_player_game_button_clicked()
@@ -113,7 +127,6 @@ void Client::run_main_menu()
     m_window->resetGLStates();
 
     m_menu_action = MAIN_MENU_NONE;
-    sfg::SFGUI sfgui;
     sfg::Box::Ptr box = sfg::Box::Create(sfg::Box::VERTICAL, 10.0f);
     sfg::Button::Ptr btn_singleplayer =
         sfg::Button::Create("Play Single Player Game");
@@ -177,28 +190,20 @@ void Client::run_main_menu()
 
         desktop.Update(m_clock.restart().asSeconds());
         m_window->clear();
-        sfgui.Display(*m_window);
+        m_sfgui.Display(*m_window);
         m_window->display();
 
         if (m_menu_action != MAIN_MENU_NONE)
-        {
-            switch (m_menu_action)
-            {
-                case MAIN_MENU_SINGLE:
-                    start_server();
-                    run_client();
-                    m_window->resetGLStates();
-                    break;
-                case MAIN_MENU_EXIT:
-                    in_menu = false;
-                    break;
-            }
-            m_menu_action = MAIN_MENU_NONE;
-        }
+            break;
     }
 }
 
 void Client::start_server()
+{
+    /* TODO */
+}
+
+void Client::stop_server()
 {
     /* TODO */
 }

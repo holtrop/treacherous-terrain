@@ -14,6 +14,7 @@
 #include "GLMatrix.h"
 #include "GLBuffer.h"
 #include "Network.h"
+#include <SFGUI/SFGUI.hpp>
 
 #define SHOT_RING_WIDTH 10.0f
 
@@ -35,6 +36,7 @@ class Client
     protected:
         void run_main_menu();
         void start_server();
+        void stop_server();
         void run_client();
         void connect(int port, const char *host);
         void disconnect();
@@ -59,6 +61,7 @@ class Client
         void play_single_player_game_button_clicked();
         void exit_button_clicked();
 
+        sfg::SFGUI m_sfgui;
         int m_menu_action;
         bool m_mouse_grabbed;
         double m_player_dir_x;
