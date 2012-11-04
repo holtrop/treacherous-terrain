@@ -13,30 +13,29 @@ using namespace std;
 /* TODO: this should be moved to common somewhere */
 #define MAX_SHOT_DISTANCE 250.0
 #define SHOT_EXPAND_SPEED 75.0
+#define DEFAULT_PORT 59243
 
 Client::Client(const string & exe_path)
 {
-    connect(59243, "127.0.0.1"); // Just connect to local host for now - testing
     m_client_has_focus = true;
-    m_players.clear();
-    m_current_player = 0;
-    m_left_button_pressed = false;
-    m_drawing_shot = false;
-    m_shot_fired = false;
     m_exe_path = exe_path;
     m_server_pid = 0;
 }
 
 Client::~Client()
 {
-    disconnect();
-    m_players.clear();
 }
 
 void Client::connect(int port, const char *host)
 {
     m_net_client = new Network();
     m_net_client->Create(port, host);
+    m_players.clear();
+    m_current_player = 0;
+    m_left_button_pressed = false;
+    m_drawing_shot = false;
+    m_shot_fired = false;
+    m_map = Map();
 }
 
 void Client::disconnect()
@@ -111,8 +110,10 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
         {
         case MAIN_MENU_SINGLE:
             start_server();
+            connect(DEFAULT_PORT, "127.0.0.1");
             run_client();
             stop_server();
+            disconnect();
             break;
         case MAIN_MENU_EXIT:
             in_game = false;
