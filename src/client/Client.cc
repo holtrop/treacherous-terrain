@@ -1,12 +1,20 @@
+#include <algorithm>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <signal.h>
 #include <math.h>
 #include "Client.h"
 #include "Types.h"
+
+using namespace std;
 
 /* TODO: this should be moved to common somewhere */
 #define MAX_SHOT_DISTANCE 250.0
 #define SHOT_EXPAND_SPEED 75.0
 
-Client::Client()
+Client::Client(const string & exe_path)
 {
     connect(59243, "127.0.0.1"); // Just connect to local host for now - testing
     m_client_has_focus = true;
@@ -15,6 +23,8 @@ Client::Client()
     m_left_button_pressed = false;
     m_drawing_shot = false;
     m_shot_fired = false;
+    m_exe_path = exe_path;
+    m_server_pid = 0;
 }
 
 Client::~Client()
@@ -198,14 +208,38 @@ void Client::run_main_menu()
     }
 }
 
-void Client::start_server()
+bool Client::start_server()
 {
-    /* TODO */
+    string server_exe_path = m_exe_path;
+    int length = server_exe_path.length();
+    if (length > 4)
+    {
+        string ext = server_exe_path.substr(length - 4);
+        transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+        if (ext == ".exe")
+            server_exe_path = server_exe_path.substr(0, length - 4);
+    }
+    server_exe_path += "-server";
+    pid_t pid = fork();
+    if (pid < 0)
+        return false;
+    if (pid > 0)
+    {
+        m_server_pid = pid;
+        return true;
+    }
+    execl(server_exe_path.c_str(), "treacherous-terrain-server", NULL);
+    exit(-1);
 }
 
 void Client::stop_server()
 {
-    /* TODO */
+    if (m_server_pid > 0)
+    {
+        kill(m_server_pid, SIGINT);
+        m_server_pid = 0;
+        waitpid(-1, NULL, 0);
+    }
 }
 
 void Client::run_client()

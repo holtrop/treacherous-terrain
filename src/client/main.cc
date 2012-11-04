@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    Client client;
+    Client client(argv[0]);
 
     client.run(fullscreen, width, height, player_name);
 

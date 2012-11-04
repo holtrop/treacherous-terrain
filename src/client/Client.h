@@ -3,6 +3,7 @@
 
 #include <map>
 #include <list>
+#include <string>
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 #include "refptr.h"
@@ -30,12 +31,12 @@ enum
 class Client
 {
     public:
-        Client();
+        Client(const std::string & exe_path);
         ~Client();
         void run(bool fullscreen, int width, int height, std::string pname);
     protected:
         void run_main_menu();
-        void start_server();
+        bool start_server();
         void stop_server();
         void run_client();
         void connect(int port, const char *host);
@@ -61,6 +62,8 @@ class Client
         void play_single_player_game_button_clicked();
         void exit_button_clicked();
 
+        int m_server_pid;
+        std::string m_exe_path;
         sfg::SFGUI m_sfgui;
         int m_menu_action;
         bool m_mouse_grabbed;
