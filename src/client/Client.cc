@@ -92,6 +92,7 @@ void Client::disconnect()
     }
 
     m_net_client->Destroy();
+    m_net_client = NULL;
 }
 
 void Client::run(bool fullscreen, int width, int height, std::string pname)
