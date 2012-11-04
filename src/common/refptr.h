@@ -85,7 +85,10 @@ template <typename T> void refptr<T>::destroy()
     {
         if (*m_refCount <= 1)
         {
-            delete m_ptr;
+            if (m_ptr != NULL)
+            {
+                delete m_ptr;
+            }
             delete m_refCount;
         }
         else
