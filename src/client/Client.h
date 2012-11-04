@@ -34,6 +34,8 @@ class Client
         void run(bool fullscreen, int width, int height, std::string pname);
     protected:
         void run_main_menu();
+        void run_host_menu();
+        void run_join_menu();
         bool start_server();
         void stop_server();
         void run_client();

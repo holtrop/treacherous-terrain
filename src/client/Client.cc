@@ -112,6 +112,12 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
             stop_server();
             disconnect();
             break;
+        case MAIN_MENU_HOST:
+            run_host_menu();
+            break;
+        case MAIN_MENU_JOIN:
+            run_join_menu();
+            break;
         case MAIN_MENU_EXIT:
             in_game = false;
             break;
@@ -204,6 +210,16 @@ void Client::run_main_menu()
         if (m_menu_action != MAIN_MENU_NONE)
             break;
     }
+}
+
+void Client::run_host_menu()
+{
+    /* TODO */
+}
+
+void Client::run_join_menu()
+{
+    /* TODO */
 }
 
 bool Client::start_server()
