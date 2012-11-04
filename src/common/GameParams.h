@@ -1,0 +1,9 @@
+#ifndef GAMEPARAMS_H
+#define GAMEPARAMS_H
+
+#define DEFAULT_PORT 59243
+#define MAX_SHOT_DISTANCE 250.0
+#define SHOT_EXPAND_SPEED 75.0
+#define SHOT_RING_WIDTH 10.0f
+
+#endif

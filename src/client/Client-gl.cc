@@ -7,6 +7,7 @@
 #include "Client.h"
 #include "ccfs.h"
 #include "HexTile.h"
+#include "GameParams.h"
 
 using namespace std;
 

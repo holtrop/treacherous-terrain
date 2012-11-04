@@ -17,8 +17,6 @@
 #include "Network.h"
 #include <SFGUI/SFGUI.hpp>
 
-#define SHOT_RING_WIDTH 10.0f
-
 enum
 {
     MAIN_MENU_NONE,

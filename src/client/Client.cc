@@ -7,13 +7,9 @@
 #include <math.h>
 #include "Client.h"
 #include "Types.h"
+#include "GameParams.h"
 
 using namespace std;
-
-/* TODO: this should be moved to common somewhere */
-#define MAX_SHOT_DISTANCE 250.0
-#define SHOT_EXPAND_SPEED 75.0
-#define DEFAULT_PORT 59243
 
 Client::Client(const string & exe_path)
 {

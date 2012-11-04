@@ -1,10 +1,11 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include "Server.h"
+#include "GameParams.h"
 
 int main(int argc, char *argv[])
 {
-    int port = 59243;
+    int port = DEFAULT_PORT;
     for (;;)
     {
         static struct option long_options[] = {
