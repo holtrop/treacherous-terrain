@@ -76,31 +76,31 @@ typedef struct{
 
 class Network{
     private:
-        static sf::Uint16 numclients;
-        static sf::UdpSocket  net_socket;
-        static std::map<sf::Uint32, Transmit_Message_t*> transmit_queue;
-        static char rxbuff[RECEIVE_BUFFER_SIZE];
-        static sf::Clock message_timer;
-        static sf::Clock network_timer;
-        static sf::Uint32 getUniqueMessageId();
-        static int addClients(Client_t *client, sf::Uint16 *curcl);
-        static int findClient(Client_t *client);
-        static bool queueTransmitMessage(Network_Messages_T msg_type , sf::Packet p, Client_t * dest = NULL);
-        static Client_t clients[MAX_NUM_CLIENTS];
+        sf::Uint16 numclients;
+        sf::UdpSocket  net_socket;
+        std::map<sf::Uint32, Transmit_Message_t*> transmit_queue;
+        char rxbuff[RECEIVE_BUFFER_SIZE];
+        sf::Clock message_timer;
+        sf::Clock network_timer;
+        sf::Uint32 getUniqueMessageId();
+        int addClients(Client_t *client, sf::Uint16 *curcl);
+        int findClient(Client_t *client);
+        bool queueTransmitMessage(Network_Messages_T msg_type , sf::Packet p, Client_t * dest = NULL);
+        Client_t clients[MAX_NUM_CLIENTS];
 
     public:
-        static void Create( sf::Uint16 port, sf::IpAddress address );
-        static void Destroy();
-        static bool getData(sf::Packet& p, sf::Uint8* sending_client = NULL);
-        static bool sendData(sf::Packet& p, bool guaranteed = false);
-        static int  getNumConnected();
-        static void Transmit();
-        static void Receive();
-        static void Reset();
-        static bool pendingMessages();
-        static sf::Uint16 getLocalPort();
-        static void disconnectClient(Client_t* player_client);
-        static Client_t* getClient( sf::Uint8 client_ndx );
+        void Create( sf::Uint16 port, sf::IpAddress address );
+        void Destroy();
+        bool getData(sf::Packet& p, sf::Uint8* sending_client = NULL);
+        bool sendData(sf::Packet& p, bool guaranteed = false);
+        int  getNumConnected();
+        void Transmit();
+        void Receive();
+        void Reset();
+        bool pendingMessages();
+        sf::Uint16 getLocalPort();
+        void disconnectClient(Client_t* player_client);
+        Client_t* getClient( sf::Uint8 client_ndx );
 };
 
 sf::Packet& operator <<(sf::Packet& Packet, const Network_Messages_T& NMT);

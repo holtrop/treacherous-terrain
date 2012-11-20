@@ -23,7 +23,10 @@ Client::~Client()
 }
 
 void Client::connect(int port, const char *host)
-{
+{    
+    sf::Packet connect_packet;
+    sf::Uint16 players_port;
+    sf::Uint8 packet_type;
     m_net_client = new Network();
     m_net_client->Create(port, host);
     m_players.clear();
@@ -32,6 +35,20 @@ void Client::connect(int port, const char *host)
     m_drawing_shot = false;
     m_shot_fired = false;
     m_map = Map();
+    
+    // Send the player connect message to the server
+    players_port = m_net_client->getLocalPort();
+    packet_type = PLAYER_CONNECT;
+    connect_packet.clear();
+    connect_packet << packet_type;
+    connect_packet << m_current_player;
+    connect_packet << m_current_player_name;
+    // Send the players port.  This will serve as a unique
+    // identifier and prevent users with the same name from controlling
+    // each other.
+    connect_packet << players_port;
+    m_net_client->sendData(connect_packet, true);    
+    
 }
 
 void Client::disconnect()
@@ -243,6 +260,7 @@ bool Client::start_server()
         return true;
     }
     execl(server_exe_path.c_str(), "treacherous-terrain-server", NULL);
+    sf::sleep(sf::seconds(0.010)); // 10 milli-seconds wait to ensure server is up and running
     exit(-1);
 }
 
@@ -353,7 +371,6 @@ void Client::grab_mouse(bool grab)
 
 void Client::update(double elapsed_time)
 {
-    static bool registered_player = false;
     sf::Packet client_packet;
 
     m_net_client->Receive();
@@ -574,26 +591,6 @@ void Client::update(double elapsed_time)
             player->d_pressed = d_pressed;
             player->rel_mouse_movement =  rel_mouse_movement;
         }
-    }
-    else if(!registered_player)
-    {
-        // Needs to be 32 bit so that the packet << overload will work.
-        sf::Uint16 players_port = m_net_client->getLocalPort();
-        sf::Uint8 packet_type = PLAYER_CONNECT;
-        client_packet.clear();
-        client_packet << packet_type;
-        client_packet << m_current_player;
-        client_packet << m_current_player_name;
-        // Send the players port.  This will server as a unique
-        // identifier and prevent users with the same name from controlling
-        // each other.
-        client_packet << players_port;
-        m_net_client->sendData(client_packet, true);
-        registered_player = true;
-    }
-    else
-    {
-        // Do nothing.
     }
     m_net_client->Transmit();
 }

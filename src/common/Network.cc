@@ -3,15 +3,6 @@
 #include <cstdlib>
 #include <iostream>
 
-
-sf::Uint16 Network::numclients;
-sf::UdpSocket  Network::net_socket;
-char Network::rxbuff[RECEIVE_BUFFER_SIZE];
-std::map<sf::Uint32, Transmit_Message_t*>  Network::transmit_queue;
-Client_t Network::clients[MAX_NUM_CLIENTS];
-sf::Clock Network::message_timer;
-sf::Clock Network::network_timer;
-
 sf::Uint32 Network::getUniqueMessageId( void )
 {
     sf::Uint32 next_msg_uid = 0;
@@ -36,7 +27,10 @@ void Network::Create(sf::Uint16 port, sf::IpAddress address )
         tmpclient.disconnect = DISCONNECTED;
         numclients = addClients(&tmpclient, &current_client);
 
-        net_socket.bind( sf::Socket::AnyPort );
+        if(sf::Socket::Done != net_socket.bind( sf::Socket::AnyPort ))
+        {
+            std::cout << "Error, could not bind to port\n";
+        }
         net_socket.setBlocking(false);
     }
     else
