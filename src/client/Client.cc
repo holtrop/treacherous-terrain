@@ -23,7 +23,7 @@ Client::~Client()
 }
 
 void Client::connect(int port, const char *host)
-{    
+{
     sf::Packet connect_packet;
     sf::Uint16 players_port;
     sf::Uint8 packet_type;
@@ -35,7 +35,7 @@ void Client::connect(int port, const char *host)
     m_drawing_shot = false;
     m_shot_fired = false;
     m_map = Map();
-    
+
     // Send the player connect message to the server
     players_port = m_net_client->getLocalPort();
     packet_type = PLAYER_CONNECT;
@@ -47,8 +47,8 @@ void Client::connect(int port, const char *host)
     // identifier and prevent users with the same name from controlling
     // each other.
     connect_packet << players_port;
-    m_net_client->sendData(connect_packet, true);    
-    
+    m_net_client->sendData(connect_packet, true);
+
 }
 
 void Client::disconnect()
@@ -260,7 +260,6 @@ bool Client::start_server()
         return true;
     }
     execl(server_exe_path.c_str(), "treacherous-terrain-server", NULL);
-    sf::sleep(sf::seconds(0.010)); // 10 milli-seconds wait to ensure server is up and running
     exit(-1);
 }
 
@@ -446,20 +445,20 @@ void Client::update(double elapsed_time)
                 }
                 break;
             }
-            
+
             case PLAYER_SHOT:
             {
                 sf::Uint8 pindex;
                 double x,y;
                 double direction;
                 double distance;
-                
+
                 client_packet >> pindex;
                 client_packet >> x;
                 client_packet >> y;
                 client_packet >> direction;
                 client_packet >> distance;
-                
+
                 // Ensure that the player who shot exists
                 if(m_players.end() != m_players.find(pindex))
                 {
