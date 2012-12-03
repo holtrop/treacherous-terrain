@@ -134,6 +134,14 @@ void Client::run(bool fullscreen, int width, int height, std::string pname)
             break;
         case MAIN_MENU_JOIN:
             run_join_menu();
+            switch (m_menu_action)
+            {
+            case JOIN_MENU_JOIN:
+                connect(DEFAULT_PORT, m_server_hostname.c_str());
+                run_client();
+                disconnect();
+                break;
+            }
             break;
         case MAIN_MENU_EXIT:
             in_game = false;
@@ -152,6 +160,11 @@ void Client::exit_button_clicked()
     m_menu_action = MAIN_MENU_EXIT;
 }
 
+void Client::join_game_button_clicked()
+{
+    m_menu_action = MAIN_MENU_JOIN;
+}
+
 void Client::run_main_menu()
 {
     m_window->setMouseCursorVisible(true);
@@ -165,6 +178,8 @@ void Client::run_main_menu()
             &Client::play_single_player_game_button_clicked, this);
     sfg::Button::Ptr btn_hostgame = sfg::Button::Create("Host a Network Game");
     sfg::Button::Ptr btn_joingame = sfg::Button::Create("Join a Network Game");
+    btn_joingame->GetSignal(sfg::Widget::OnLeftClick).Connect(
+            &Client::join_game_button_clicked, this);
     sfg::Button::Ptr btn_exit = sfg::Button::Create("Exit");
     btn_exit->GetSignal(sfg::Widget::OnLeftClick).Connect(
             &Client::exit_button_clicked, this);
@@ -234,9 +249,97 @@ void Client::run_host_menu()
     /* TODO */
 }
 
+void Client::join_button_clicked()
+{
+    m_menu_action = JOIN_MENU_JOIN;
+    m_server_hostname = m_entry_hostname->GetText();
+}
+
+void Client::join_menu_cancel_button_clicked()
+{
+    m_menu_action = JOIN_MENU_CANCEL;
+}
+
 void Client::run_join_menu()
 {
-    /* TODO */
+    m_window->setMouseCursorVisible(true);
+    m_window->resetGLStates();
+
+    m_menu_action = JOIN_MENU_NONE;
+    sfg::Box::Ptr box = sfg::Box::Create(sfg::Box::VERTICAL, 10.0f);
+    sfg::Button::Ptr btn_join =
+        sfg::Button::Create("Join");
+    btn_join->GetSignal(sfg::Widget::OnLeftClick).Connect(
+            &Client::join_button_clicked, this);
+    sfg::Button::Ptr btn_cancel = sfg::Button::Create("Cancel");
+    btn_cancel->GetSignal(sfg::Widget::OnLeftClick).Connect(
+            &Client::join_menu_cancel_button_clicked, this);
+    sfg::Box::Ptr addr_box = sfg::Box::Create(sfg::Box::HORIZONTAL, 10.0f);
+    addr_box->Pack(sfg::Label::Create("Host:"));
+    m_entry_hostname = sfg::Entry::Create("localhost");
+    m_entry_hostname->SetRequisition(sf::Vector2f(200, 0));
+    addr_box->Pack(m_entry_hostname);
+    box->Pack(addr_box);
+    sfg::Box::Ptr btn_box = sfg::Box::Create(sfg::Box::HORIZONTAL, 10.0f);
+    btn_box->Pack(btn_cancel);
+    btn_box->Pack(btn_join);
+    box->Pack(btn_box);
+    sfg::Window::Ptr gui_window(sfg::Window::Create(sfg::Window::TITLEBAR |
+                sfg::Window::BACKGROUND));
+    gui_window->SetTitle("Treacherous Terrain - Join Game");
+    gui_window->Add(box);
+    gui_window->SetPosition(sf::Vector2f(
+                m_width / 2 - gui_window->GetAllocation().width / 2,
+                m_height / 2 - gui_window->GetAllocation().height / 2));
+    sfg::Desktop desktop;
+    desktop.Add(gui_window);
+
+    sf::Event event;
+
+    bool in_menu = true;
+    while (in_menu && m_window->isOpen())
+    {
+        while (m_window->pollEvent(event))
+        {
+            desktop.HandleEvent(event);
+
+            switch (event.type)
+            {
+            case sf::Event::Closed:
+                m_window->close();
+                in_menu = false;
+                break;
+            case sf::Event::KeyPressed:
+                switch (event.key.code)
+                {
+                case sf::Keyboard::Escape:
+                    m_menu_action = JOIN_MENU_CANCEL;
+                    break;
+                default:
+                    break;
+                }
+                break;
+            case sf::Event::Resized:
+                m_width = event.size.width;
+                m_height = event.size.height;
+                gui_window->SetPosition(sf::Vector2f(
+                            m_width / 2 - gui_window->GetAllocation().width / 2,
+                            m_height / 2 - gui_window->GetAllocation().height / 2));
+                break;
+            default:
+                break;
+            }
+        }
+
+        desktop.Update(m_clock.restart().asSeconds());
+        m_window->clear();
+        m_sfgui.Display(*m_window);
+        m_window->display();
+
+        if (m_menu_action != JOIN_MENU_NONE)
+            break;
+    }
+    m_entry_hostname.reset();
 }
 
 bool Client::start_server()

@@ -26,6 +26,13 @@ enum
     MAIN_MENU_EXIT
 };
 
+enum
+{
+    JOIN_MENU_NONE,
+    JOIN_MENU_CANCEL,
+    JOIN_MENU_JOIN
+};
+
 class Client
 {
     public:
@@ -61,6 +68,9 @@ class Client
         /* GUI callbacks */
         void play_single_player_game_button_clicked();
         void exit_button_clicked();
+        void join_game_button_clicked();
+        void join_button_clicked();
+        void join_menu_cancel_button_clicked();
 
         int m_server_pid;
         std::string m_exe_path;
@@ -104,6 +114,10 @@ class Client
         bool m_drawing_shot;
         float m_drawing_shot_distance;
         bool m_shot_fired;
+        std::string m_server_hostname;
+
+        /* GUI objects */
+        sfg::Entry::Ptr m_entry_hostname;
 };
 
 #endif
