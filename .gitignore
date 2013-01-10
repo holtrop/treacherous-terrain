@@ -1,4 +1,4 @@
 bin
-src/client/ccfs.*
+src/*/ccfs.*
 *.blend?
 tags
