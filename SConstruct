@@ -75,14 +75,15 @@ else:
 # our sources
 sources_client = (find_sources_under('src/common') +
         find_sources_under('src/client'))
-if 'src/client/ccfs.cc' not in sources_client:
-    sources_client.append('src/client/ccfs.cc')
+if 'src/common/ccfs.cc' not in sources_client:
+    sources_client.append('src/common/ccfs.cc')
 sources_server = (find_sources_under('src/common') +
         find_sources_under('src/server'))
-if 'src/server/ccfs.cc' not in sources_server:
-    sources_server.append('src/server/ccfs.cc')
+if 'src/common/ccfs.cc' not in sources_server:
+    sources_server.append('src/common/ccfs.cc')
 
 # create the scons environments
+env_ccfs = Environment()
 env_client = Environment(
         CC = CC,
         CXX = CXX,
@@ -126,15 +127,11 @@ def CCFS(target, source, env):
 
 def CCFS_emitter(target, source, env):
     target.append(re.sub(r'\..*$', '.h', str(target[0])))
+    env.Depends(target, 'ccfs_gen.py')
     return target, source
 
-env_client.Append(BUILDERS = {'CCFS' : Builder(action = CCFS, emitter = CCFS_emitter)})
-env_server.Append(BUILDERS = {'CCFS' : Builder(action = CCFS, emitter = CCFS_emitter)})
-
-env_client.CCFS('src/client/ccfs.cc', get_all_files(CCFS_ROOT))
-env_client.Depends('src/client/ccfs.cc', 'ccfs_gen.py')
-env_server.CCFS('src/server/ccfs.cc', get_all_files(CCFS_ROOT))
-env_server.Depends('src/server/ccfs.cc', 'ccfs_gen.py')
+env_ccfs.Append(BUILDERS = {'CCFS' : Builder(action = CCFS, emitter = CCFS_emitter)})
+env_ccfs.CCFS('src/common/ccfs.cc', get_all_files(CCFS_ROOT))
 
 for lib_path in libs_to_copy:
     installed_libs = env_client.Install(BIN_DIR, lib_path)

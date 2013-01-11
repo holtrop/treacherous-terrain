@@ -102,6 +102,8 @@ CCFSClass %s;
     h_file.write('''#ifndef CCFS_GEN_%s
 #define CCFS_GEN_%s
 
+#include <stdlib.h>
+
 class CCFSClass
 {
 public:
