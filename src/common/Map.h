@@ -2,13 +2,14 @@
 #define MAP_H
 
 #include <vector>
+#include <string>
 #include "refptr.h"
 #include "HexTile.h"
 
 class Map
 {
     public:
-        Map(int width=21, int height=21, float tile_size=50);
+        Map(const std::string & mapname = "default", float tile_size = 50);
         bool tile_present(int x, int y) { return !m_grid[y][x].isNull(); }
         refptr<HexTile> get_tile(int x, int y) { return m_grid[y][x]; }
         refptr<HexTile> get_tile_at(float x, float y);

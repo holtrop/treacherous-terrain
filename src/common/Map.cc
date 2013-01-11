@@ -1,3 +1,4 @@
+#include "ccfs.h"
 #include "Map.h"
 #include "HexTile.h"
 
@@ -12,38 +13,63 @@ using namespace std;
  * are ((x - HEX_WIDTH_TO_HEIGHT * m_tile_size / 2, y - m_tile_size / 2),
  *      (x + HEX_WIDTH_TO_HEIGHT * m_tile_size / 2, y + m_tile_size / 2))
  */
-Map::Map(int width, int height, float tile_size)
+Map::Map(const string & mapname, float tile_size)
 {
-    m_width = width;
-    m_height = height;
+    unsigned int length = 0u;
+    const unsigned char *mapdata = CFS.get_file(("maps/" + mapname).c_str(), &length);
+
+    m_width = m_height = 0;
     m_tile_size = tile_size;
 
-    /* construction of default map */
+    int line_width = 0;
+    /* determine the map size */
+    for (unsigned int i = 0; i < length; i++)
+    {
+        if (mapdata[i] == '\n')
+        {
+            if (line_width > m_width)
+            {
+                m_width = line_width;
+            }
+            line_width = 0;
+            m_height++;
+        }
+        else
+        {
+            line_width++;
+        }
+    }
+
     m_span_x = HEX_WIDTH_TO_HEIGHT * 0.75 * tile_size;
-    m_offset_x = -m_span_x * (width / 2.0);
-    m_offset_y = -tile_size * (height / 2.0);
+    m_offset_x = -m_span_x * (m_width / 2.0);
+    m_offset_y = -tile_size * (m_height / 2.0);
 
-    HexTile outer_out(0, 0, 0.85 * m_span_x * width);
-    HexTile outer_in(0, 0, 0.5 * m_span_x * width);
-    HexTile inner_out(0, 0, 0.30 * m_span_x * width);
-
-    for (int i = 0; i < height; i++)
+    for (int i = 0; i < m_height; i++)
     {
         m_grid.push_back(vector< refptr< HexTile > >());
-        for (int j = 0; j < width; j++)
+        for (int j = 0; j < m_width; j++)
         {
-            refptr<HexTile> ht;
-            float x = j * m_span_x + m_offset_x;
-            float y = (i + ((j & 1) ? 0.5 : 0.0)) * tile_size + m_offset_y;
+            m_grid[i].push_back(refptr<HexTile>());
+        }
+    }
 
-            if (inner_out.point_within(y, x)
-                    || (outer_out.point_within(y, x)
-                        && !outer_in.point_within(y, x)))
+    for (unsigned int pos = 0, i = 0, j = 0; pos < length; pos++)
+    {
+        if (mapdata[pos] == '\n')
+        {
+            i++;
+            j = 0;
+        }
+        else
+        {
+            if (mapdata[pos] == 'X')
             {
-                ht = new HexTile(x, y, tile_size);
-            }
+                float x = j * m_span_x + m_offset_x;
+                float y = (i + ((j & 1) ? 0.5 : 0.0)) * tile_size + m_offset_y;
 
-            m_grid[i].push_back(ht);
+                m_grid[i][j] = new HexTile(x, y, tile_size);
+            }
+            j++;
         }
     }
 }
