@@ -40,8 +40,8 @@ LINKFLAGS = []
 LIBS_client = []
 LIBS_server = []
 libs_to_copy = []
-SFML_PATH = '/c/apps/SFML-2.0-rc' if platform == 'windows' else '/opt/SFML'
-SFGUI_PATH = '/c/apps/SFGUI' if platform == 'windows' else '/opt/SFGUI'
+SFML_PATH = '/c/apps/SFML-2.0' if platform == 'windows' else '/opt/SFML'
+SFGUI_PATH = '/c/apps/SFGUI-0.1.0' if platform == 'windows' else '/opt/SFGUI'
 if 'SFML_PATH' in os.environ:
     SFML_PATH = os.environ['SFML_PATH']
 if 'SFGUI_PATH' in os.environ:
